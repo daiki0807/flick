@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>フリック入力キーボード</title>
+    <style>
+        :root {
+            --bg-grad-start: #667eea;
+            --bg-grad-end: #764ba2;
+            --key-bg: #ffffff;
+            --key-border: #cccccc;
+            --key-active-bg: #667eea;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --btn-space: #4ecdc4;
+            --btn-delete: #ffa502;
+            --btn-clear: #ff6b6b;
+            --btn-search: #4285f4;
+            --btn-copy: #34a853;
+            --btn-save: #9b59b6;
+            --notification-success-bg: #2ecc71;
+            --notification-error-bg: #e74c3c;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(45deg, var(--bg-grad-start), var(--bg-grad-end));
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: manipulation; /* Prevents zoom, allows panning */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        header p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        #output-area {
+            background: var(--key-bg);
+            min-height: 150px;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 24px;
+            color: var(--text-dark);
+            border: 1px solid var(--key-border);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow-wrap: break-word;
+            word-break: break-all;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-light);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        #btn-space { background-color: var(--btn-space); }
+        #btn-delete { background-color: var(--btn-delete); }
+        #btn-clear { background-color: var(--btn-clear); }
+        #btn-search { background-color: var(--btn-search); }
+        #btn-copy { background-color: var(--btn-copy); }
+        #btn-save { background-color: var(--btn-save); }
+
+        #keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            touch-action: none; /* Disable scrolling on keyboard */
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .key {
+            width: 70px;
+            height: 70px;
+            background-color: var(--key-bg);
+            border: 1px solid var(--key-border);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-dark);
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.1s;
+        }
+        
+        .key.active {
+            background-color: var(--key-active-bg);
+            color: var(--text-light);
+        }
+
+        .flick-options {
+            position: absolute;
+            width: 210px;
+            height: 210px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+        }
+
+        .flick-option {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            transition: transform 0.1s, background-color 0.1s;
+        }
+
+        .flick-center { top: 70px; left: 70px; }
+        .flick-up { top: 0; left: 70px; }
+        .flick-left { top: 70px; left: 0; }
+        .flick-down { top: 140px; left: 70px; }
+        .flick-right { top: 70px; left: 140px; }
+
+        .flick-option.highlight {
+            background-color: var(--key-active-bg);
+            transform: scale(1.1);
+        }
+
+        .instructions {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        #notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #notification.success { background-color: var(--notification-success-bg); }
+        #notification.error { background-color: var(--notification-error-bg); }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { gap: 10px; }
+            header h1 { font-size: 24px; }
+            #output-area { min-height: 120px; font-size: 20px; }
+            .btn { font-size: 14px; padding: 10px; }
+            .key { width: 60px; height: 60px; font-size: 20px; }
+            .flick-options { width: 180px; height: 180px; }
+            .flick-option { width: 60px; height: 60px; font-size: 18px; }
+            .flick-center { top: 60px; left: 60px; }
+            .flick-up { top: 0; left: 60px; }
+            .flick-left { top: 60px; left: 0; }
+            .flick-down { top: 120px; left: 60px; }
+            .flick-right { top: 60px; left: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📱 フリック入力キーボード</h1>
+            <p>タッチしてフリック操作で入力</p>
+        </header>
+
+        <div id="output-area" contenteditable="true"></div>
+
+        <div class="button-grid">
+            <button class="btn" id="btn-space">スペース</button>
+            <button class="btn" id="btn-delete">さくじょ</button>
+            <button class="btn" id="btn-clear">クリア</button>
+        </div>
+        <div class="button-grid">
+            <button class="btn" id="btn-search">🔍 Google検索</button>
+            <button class="btn" id="btn-copy">📋 コピー</button>
+            <button class="btn" id="btn-save">💾 ほぞん</button>
+        </div>
+
+        <div id="keyboard">
+            <!-- キーボードのキーはJSで生成 -->
+        </div>
+        
+        <p class="instructions">
+            キーをタッチしたまま上下左右に指を動かして文字を選択し、指を離して入力します。
+        </p>
+    </div>
+
+    <div id="notification"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const outputArea = document.getElementById('output-area');
+            const keyboard = document.getElementById('keyboard');
+            const notification = document.getElementById('notification');
+
+            const flickThreshold = 20;
+            let activeKey = null;
+            let startX = 0;
+            let startY = 0;
+            let flickDir = 'center';
+
+            const keyMap = {
+                'あ': { center: 'あ', up: 'い', right: 'う', down: 'え', left: 'お' },
+                'か': { center: 'か', up: 'き', right: 'く', down: 'け', left: 'こ' },
+                'さ': { center: 'さ', up: 'し', right: 'す', down: 'せ', left: 'そ' },
+                'た': { center: 'た', up: 'ち', right: 'つ', down: 'て', left: 'と' },
+                'な': { center: 'な', up: 'に', right: 'ぬ', down: 'ね', left: 'の' },
+                'は': { center: 'は', up: 'ひ', right: 'ふ', down: 'へ', left: 'ほ' },
+                'ま': { center: 'ま', up: 'み', right: 'む', down: 'め', left: 'も' },
+                'や': { center: 'や', up: 'ゆ', right: 'よ', down: '', left: '' },
+                'ら': { center: 'ら', up: 'り', right: 'る', down: 'れ', left: 'ろ' },
+                'わ': { center: 'わ', up: 'を', right: 'ん', down: '', left: '' },
+                '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
+                '小': { center: 'っ', up: 'ゃ', right: 'ゅ', down: 'ょ', left: 'ー' },
+            };
+
+            const keyLayout = [
+                ['あ', 'か', 'さ', 'た', 'な'],
+                ['は', 'ま', 'や', 'ら', 'わ'],
+                ['゛゜', '', '小', '', '']
+            ];
+            
+            keyLayout[2][1] = keyLayout[2][3] = ''; // Empty keys
+
+            const dakutenMap = {
+                'か': 'が', 'き': 'ぎ', 'く': 'ぐ', 'け': 'げ', 'こ': 'ご',
+                'さ': 'ざ', 'し': 'じ', 'す': 'ず', 'せ': 'ぜ', 'そ': 'ぞ',
+                'た': 'だ', 'ち': 'ぢ', 'つ': 'づ', 'て': 'で', 'と': 'ど',
+                'は': 'ば', 'ひ': 'び', 'ふ': 'ぶ', 'へ': 'べ', 'ほ': 'ぼ',
+                'ウ': 'ヴ'
+            };
+
+            const handakutenMap = {
+                'は': 'ぱ', 'ひ': 'ぴ', 'ふ': 'ぷ', 'へ': 'ぺ', 'ほ': 'ぽ'
+            };
+
+            function createKeyboard() {
+                keyLayout.forEach(row => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'keyboard-row';
+                    row.forEach(keyChar => {
+                        const keyDiv = document.createElement('div');
+                        if (keyChar) {
+                            keyDiv.className = 'key';
+                            keyDiv.textContent = keyChar;
+                            keyDiv.dataset.key = keyChar;
+                            createFlickOptions(keyDiv, keyChar);
+                        } else {
+                            keyDiv.style.width = '70px';
+                            keyDiv.style.visibility = 'hidden';
+                        }
+                        rowDiv.appendChild(keyDiv);
+                    });
+                    keyboard.appendChild(rowDiv);
+                });
+            }
+
+            function createFlickOptions(keyDiv, keyChar) {
+                const options = keyMap[keyChar];
+                if (!options) return;
+
+                const container = document.createElement('div');
+                container.className = 'flick-options';
+
+                Object.entries(options).forEach(([dir, char]) => {
+                    if (char) {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = `flick-option flick-${dir}`;
+                        optionDiv.textContent = char;
+                        container.appendChild(optionDiv);
+                    }
+                });
+                keyDiv.appendChild(container);
+            }
+
+            function getFlickDirection(dx, dy) {
+                if (Math.abs(dx) < flickThreshold && Math.abs(dy) < flickThreshold) return 'center';
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    return dx > 0 ? 'right' : 'left';
+                } else {
+                    return dy > 0 ? 'down' : 'up';
+                }
+            }
+            
+            function insertText(text) {
+                outputArea.focus();
+                document.execCommand('insertText', false, text);
+            }
+
+            function handleStart(e) {
+                const target = e.target.closest('.key');
+                if (target && target.dataset.key) {
+                    e.preventDefault();
+                    activeKey = target;
+                    activeKey.classList.add('active');
+                    
+                    const touch = e.touches ? e.touches[0] : e;
+                    startX = touch.clientX;
+                    startY = touch.clientY;
+                    
+                    const flickOptions = activeKey.querySelector('.flick-options');
+                    if (flickOptions) {
+                        flickOptions.style.display = 'block';
+                        highlightFlickOption('center');
+                    }
+                }
+            }
+
+            function handleMove(e) {
+                if (!activeKey) return;
+                e.preventDefault();
+
+                const touch = e.touches ? e.touches[0] : e;
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+
+                const newFlickDir = getFlickDirection(dx, dy);
+                if (newFlickDir !== flickDir) {
+                    flickDir = newFlickDir;
+                    highlightFlickOption(flickDir);
+                }
+            }
+
+            function handleEnd(e) {
+                if (!activeKey) return;
+                e.preventDefault();
+
+                const keyChar = activeKey.dataset.key;
+                const options = keyMap[keyChar];
+                const selectedChar = options[flickDir] || options['center'];
+
+                if (selectedChar) {
+                    if (selectedChar === '゛' || selectedChar === '゜') {
+                        const lastChar = outputArea.innerText.slice(-1);
+                        const map = (selectedChar === '゛') ? dakutenMap : handakutenMap;
+                        const newChar = Object.keys(map).find(k => map[k] === lastChar) || 
+                                      Object.values(map).find(v => v === lastChar) ||
+                                      map[lastChar];
+                        if (newChar) {
+                            document.execCommand('delete', false, null);
+                            insertText(newChar);
+                        }
+                    } else {
+                        insertText(selectedChar);
+                    }
+                }
+
+                const flickOptions = activeKey.querySelector('.flick-options');
+                if (flickOptions) {
+                    flickOptions.style.display = 'none';
+                }
+                
+                activeKey.classList.remove('active');
+                highlightFlickOption(null);
+                activeKey = null;
+                flickDir = 'center';
+            }
+            
+            function highlightFlickOption(dir) {
+                if (!activeKey) return;
+                const options = activeKey.querySelectorAll('.flick-option');
+                options.forEach(opt => {
+                    opt.classList.remove('highlight');
+                    if (dir && opt.classList.contains(`flick-${dir}`)) {
+                        opt.classList.add('highlight');
+                    }
+                });
+            }
+
+            // Event Listeners
+            keyboard.addEventListener('mousedown', handleStart);
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+            keyboard.addEventListener('touchstart', handleStart, { passive: false });
+            document.addEventListener('touchmove', handleMove, { passive: false });
+            document.addEventListener('touchend', handleEnd, { passive: false });
+
+            // Button Actions
+            document.getElementById('btn-space').addEventListener('click', () => insertText('　'));
+            document.getElementById('btn-delete').addEventListener('click', () => {
+                outputArea.focus();
+                document.execCommand('delete', false, null);
+            });
+            document.getElementById('btn-clear').addEventListener('click', () => {
+                outputArea.innerHTML = '';
+            });
+
+            document.getElementById('btn-search').addEventListener('click', () => {
+                const text = outputArea.innerText;
+                if (!text.trim()) {
+                    showNotification('検索するテキストがありません', 'error');
+                    return;
+                }
+                const url = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+                window.open(url, '_blank');
+            });
+
+            document.getElementById('btn-copy').addEventListener('click', () => {
+                const text = outputArea.innerText;
+                if (!text) {
+                    showNotification('コピーするテキストがありません', 'error');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showNotification('クリップボードにコピーしました', 'success');
+                    }).catch(() => {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            });
+            
+            function fallbackCopy(text) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showNotification('クリップボードにコピーしました', 'success');
+                    } else {
+                        showNotification('コピーに失敗しました', 'error');
+                    }
+                } catch (err) {
+                    showNotification('コピーに失敗しました', 'error');
+                }
+                document.body.removeChild(textArea);
+            }
+
+            document.getElementById('btn-save').addEventListener('click', () => {
+                const text = outputArea.innerText;
+                if (!text) {
+                    showNotification('保存するテキストがありません', 'error');
+                    return;
+                }
+                const now = new Date();
+                const formattedDate = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+                const filename = `フリック入力_${formattedDate}.txt`;
+                
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showNotification('ファイルとして保存しました', 'success');
+            });
+
+            function showNotification(message, type) {
+                notification.textContent = message;
+                notification.className = `show ${type}`;
+                setTimeout(() => {
+                    notification.className = '';
+                }, 3000);
+            }
+
+            createKeyboard();
+        });
+    </script>
+</body>
+</html>
