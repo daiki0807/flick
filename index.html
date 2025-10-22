@@ -108,6 +108,7 @@
         #btn-space { background-color: var(--btn-space); }
         #btn-delete { background-color: var(--btn-delete); }
         #btn-clear { background-color: var(--btn-clear); }
+        #btn-toggle-kana { background-color: #e67e22; }
         #btn-search { background-color: var(--btn-search); }
         #btn-copy { background-color: var(--btn-copy); }
         #btn-save { background-color: var(--btn-save); }
@@ -247,6 +248,7 @@
             <button class="btn" id="btn-space">スペース</button>
             <button class="btn" id="btn-delete">さくじょ</button>
             <button class="btn" id="btn-clear">クリア</button>
+            <button class="btn" id="btn-toggle-kana">カナ</button>
         </div>
         <div class="button-grid">
             <button class="btn" id="btn-search">🔍 Google検索</button>
@@ -277,7 +279,7 @@
             let startY = 0;
             let flickDir = 'center';
 
-            const keyMap = {
+            const hiraganaKeyMap = {
                 'あ': { center: 'あ', up: 'い', right: 'う', down: 'え', left: 'お' },
                 'か': { center: 'か', up: 'き', right: 'く', down: 'け', left: 'こ' },
                 'さ': { center: 'さ', up: 'し', right: 'す', down: 'せ', left: 'そ' },
@@ -292,27 +294,57 @@
                 '小': { center: 'っ', up: 'ゃ', right: 'ゅ', down: 'ょ', left: 'ー' },
             };
 
-            const keyLayout = [
+            const katakanaKeyMap = {
+                'ア': { center: 'ア', up: 'イ', right: 'ウ', down: 'エ', left: 'オ' },
+                'カ': { center: 'カ', up: 'キ', right: 'ク', down: 'ケ', left: 'コ' },
+                'サ': { center: 'サ', up: 'シ', right: 'ス', down: 'セ', left: 'ソ' },
+                'タ': { center: 'タ', up: 'チ', right: 'ツ', down: 'テ', left: 'ト' },
+                'ナ': { center: 'ナ', up: 'ニ', right: 'ヌ', down: 'ネ', left: 'ノ' },
+                'ハ': { center: 'ハ', up: 'ヒ', right: 'フ', down: 'ヘ', left: 'ホ' },
+                'マ': { center: 'マ', up: 'ミ', right: 'ム', down: 'メ', left: 'モ' },
+                'ヤ': { center: 'ヤ', up: 'ユ', right: 'ヨ', down: '', left: '' },
+                'ラ': { center: 'ラ', up: 'リ', right: 'ル', down: 'レ', left: 'ロ' },
+                'ワ': { center: 'ワ', up: 'ヲ', right: 'ン', down: '', left: '' },
+                '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
+                '小': { center: 'ッ', up: 'ャ', right: 'ュ', down: 'ョ', left: 'ー' },
+            };
+
+            let isKatakana = false;
+            let keyMap = hiraganaKeyMap;
+
+            const hiraganaLayout = [
                 ['あ', 'か', 'さ', 'た', 'な'],
                 ['は', 'ま', 'や', 'ら', 'わ'],
                 ['゛゜', '', '小', '', '']
             ];
-            
-            keyLayout[2][1] = keyLayout[2][3] = ''; // Empty keys
+
+            const katakanaLayout = [
+                ['ア', 'カ', 'サ', 'タ', 'ナ'],
+                ['ハ', 'マ', 'ヤ', 'ラ', 'ワ'],
+                ['゛゜', '', '小', '', '']
+            ];
+
+            let keyLayout = hiraganaLayout;
 
             const dakutenMap = {
                 'か': 'が', 'き': 'ぎ', 'く': 'ぐ', 'け': 'げ', 'こ': 'ご',
                 'さ': 'ざ', 'し': 'じ', 'す': 'ず', 'せ': 'ぜ', 'そ': 'ぞ',
                 'た': 'だ', 'ち': 'ぢ', 'つ': 'づ', 'て': 'で', 'と': 'ど',
                 'は': 'ば', 'ひ': 'び', 'ふ': 'ぶ', 'へ': 'べ', 'ほ': 'ぼ',
+                'カ': 'ガ', 'キ': 'ギ', 'ク': 'グ', 'ケ': 'ゲ', 'コ': 'ゴ',
+                'サ': 'ザ', 'シ': 'ジ', 'ス': 'ズ', 'セ': 'ゼ', 'ソ': 'ゾ',
+                'タ': 'ダ', 'チ': 'ヂ', 'ツ': 'ヅ', 'テ': 'デ', 'ト': 'ド',
+                'ハ': 'バ', 'ヒ': 'ビ', 'フ': 'ブ', 'ヘ': 'ベ', 'ホ': 'ボ',
                 'ウ': 'ヴ'
             };
 
             const handakutenMap = {
-                'は': 'ぱ', 'ひ': 'ぴ', 'ふ': 'ぷ', 'へ': 'ぺ', 'ほ': 'ぽ'
+                'は': 'ぱ', 'ひ': 'ぴ', 'ふ': 'ぷ', 'へ': 'ぺ', 'ほ': 'ぽ',
+                'ハ': 'パ', 'ヒ': 'ピ', 'フ': 'プ', 'ヘ': 'ペ', 'ホ': 'ポ'
             };
 
             function createKeyboard() {
+                keyboard.innerHTML = '';
                 keyLayout.forEach(row => {
                     const rowDiv = document.createElement('div');
                     rowDiv.className = 'keyboard-row';
@@ -331,6 +363,20 @@
                     });
                     keyboard.appendChild(rowDiv);
                 });
+            }
+
+            function toggleKanaMode() {
+                isKatakana = !isKatakana;
+                if (isKatakana) {
+                    keyMap = katakanaKeyMap;
+                    keyLayout = katakanaLayout;
+                    document.getElementById('btn-toggle-kana').textContent = 'あ';
+                } else {
+                    keyMap = hiraganaKeyMap;
+                    keyLayout = hiraganaLayout;
+                    document.getElementById('btn-toggle-kana').textContent = 'カナ';
+                }
+                createKeyboard();
             }
 
             function createFlickOptions(keyDiv, keyChar) {
@@ -462,6 +508,7 @@
             document.getElementById('btn-clear').addEventListener('click', () => {
                 outputArea.innerHTML = '';
             });
+            document.getElementById('btn-toggle-kana').addEventListener('click', toggleKanaMode);
 
             document.getElementById('btn-search').addEventListener('click', () => {
                 const text = outputArea.innerText;
