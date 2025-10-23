@@ -139,6 +139,9 @@
         #btn-delete { background-color: var(--btn-delete); }
         #btn-clear { background-color: var(--btn-clear); }
         #btn-toggle-kana { background-color: #e67e22; }
+        #btn-confirm { background-color: #3498db; }
+        #btn-comma { background-color: #1abc9c; }
+        #btn-period { background-color: #16a085; }
         #btn-search { background-color: var(--btn-search); }
         #btn-copy { background-color: var(--btn-copy); }
         #btn-save { background-color: var(--btn-save); }
@@ -280,6 +283,9 @@
             <button class="btn" id="btn-delete">さくじょ</button>
             <button class="btn" id="btn-clear">クリア</button>
             <button class="btn" id="btn-toggle-kana">カナ</button>
+            <button class="btn" id="btn-confirm">かくてい</button>
+            <button class="btn" id="btn-comma">、</button>
+            <button class="btn" id="btn-period">。</button>
         </div>
         <div class="button-grid">
             <button class="btn" id="btn-search">🔍 Google検索</button>
@@ -591,6 +597,38 @@
                 suggestionsArea.innerHTML = '';
             });
             document.getElementById('btn-toggle-kana').addEventListener('click', toggleKanaMode);
+
+            document.getElementById('btn-confirm').addEventListener('click', () => {
+                // 未確定テキストを確定
+                if (uncommittedText) {
+                    committedText += uncommittedText;
+                    uncommittedText = '';
+                    suggestionsArea.innerHTML = '';
+                    updateOutputArea();
+                }
+            });
+
+            document.getElementById('btn-comma').addEventListener('click', () => {
+                // 未確定テキストがあれば確定してから句読点を追加
+                if (uncommittedText) {
+                    committedText += uncommittedText;
+                    uncommittedText = '';
+                    suggestionsArea.innerHTML = '';
+                }
+                committedText += '、';
+                updateOutputArea();
+            });
+
+            document.getElementById('btn-period').addEventListener('click', () => {
+                // 未確定テキストがあれば確定してから句点を追加
+                if (uncommittedText) {
+                    committedText += uncommittedText;
+                    uncommittedText = '';
+                    suggestionsArea.innerHTML = '';
+                }
+                committedText += '。';
+                updateOutputArea();
+            });
 
             document.getElementById('btn-search').addEventListener('click', () => {
                 const text = committedText + uncommittedText;
