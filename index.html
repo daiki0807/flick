@@ -78,6 +78,36 @@
             word-break: break-all;
         }
 
+        .uncommitted-text {
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-decoration-color: #667eea;
+        }
+
+        #suggestions-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            min-height: 40px;
+        }
+
+        .suggestion {
+            background-color: var(--key-bg);
+            color: var(--text-dark);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .suggestion:hover {
+            background-color: var(--key-active-bg);
+            color: var(--text-light);
+        }
+
         .button-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -243,6 +273,7 @@
         </header>
 
         <div id="output-area" contenteditable="true"></div>
+        <div id="suggestions-area"></div>
 
         <div class="button-grid">
             <button class="btn" id="btn-space">スペース</button>
@@ -272,6 +303,7 @@
             const outputArea = document.getElementById('output-area');
             const keyboard = document.getElementById('keyboard');
             const notification = document.getElementById('notification');
+            const suggestionsArea = document.getElementById('suggestions-area');
 
             const flickThreshold = 20;
             let activeKey = null;
@@ -311,6 +343,8 @@
 
             let isKatakana = false;
             let keyMap = hiraganaKeyMap;
+            let uncommittedText = '';
+            let committedText = '';
 
             const hiraganaLayout = [
                 ['あ', 'か', 'さ', 'た', 'な'],
@@ -366,7 +400,15 @@
             }
 
             function toggleKanaMode() {
+                // モード切替前に未確定テキストを確定
+                if (uncommittedText) {
+                    committedText += uncommittedText;
+                    uncommittedText = '';
+                    updateOutputArea();
+                }
+
                 isKatakana = !isKatakana;
+                suggestionsArea.innerHTML = '';
                 if (isKatakana) {
                     keyMap = katakanaKeyMap;
                     keyLayout = katakanaLayout;
@@ -407,8 +449,24 @@
             }
             
             function insertText(text) {
-                outputArea.focus();
-                document.execCommand('insertText', false, text);
+                uncommittedText += text;
+                updateOutputArea();
+                updateSuggestions();
+            }
+
+            function updateOutputArea() {
+                if (uncommittedText) {
+                    outputArea.innerHTML = committedText + '<span class="uncommitted-text">' + uncommittedText + '</span>';
+                } else {
+                    outputArea.innerHTML = committedText;
+                }
+                // カーソルを末尾に移動
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(outputArea);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
             }
 
             function handleStart(e) {
@@ -455,14 +513,17 @@
 
                 if (selectedChar) {
                     if (selectedChar === '゛' || selectedChar === '゜') {
-                        const lastChar = outputArea.innerText.slice(-1);
+                        const fullText = committedText + uncommittedText;
+                        const lastChar = fullText.slice(-1);
                         const map = (selectedChar === '゛') ? dakutenMap : handakutenMap;
-                        const newChar = Object.keys(map).find(k => map[k] === lastChar) || 
-                                      Object.values(map).find(v => v === lastChar) ||
-                                      map[lastChar];
+                        const newChar = map[lastChar];
                         if (newChar) {
-                            document.execCommand('delete', false, null);
-                            insertText(newChar);
+                            if (uncommittedText.length > 0) {
+                                uncommittedText = uncommittedText.slice(0, -1) + newChar;
+                            } else {
+                                committedText = committedText.slice(0, -1) + newChar;
+                            }
+                            updateOutputArea();
                         }
                     } else {
                         insertText(selectedChar);
@@ -500,18 +561,39 @@
             document.addEventListener('touchend', handleEnd, { passive: false });
 
             // Button Actions
-            document.getElementById('btn-space').addEventListener('click', () => insertText('　'));
+            document.getElementById('btn-space').addEventListener('click', () => {
+                // スペースを押すと未確定テキストを確定
+                if (uncommittedText) {
+                    committedText += uncommittedText;
+                    uncommittedText = '';
+                    suggestionsArea.innerHTML = '';
+                }
+                committedText += '　';
+                updateOutputArea();
+            });
             document.getElementById('btn-delete').addEventListener('click', () => {
-                outputArea.focus();
-                document.execCommand('delete', false, null);
+                if (uncommittedText.length > 0) {
+                    uncommittedText = uncommittedText.slice(0, -1);
+                } else if (committedText.length > 0) {
+                    committedText = committedText.slice(0, -1);
+                }
+                updateOutputArea();
+                if (!isKatakana && uncommittedText.length > 0) {
+                    fetchKanjiSuggestions(uncommittedText);
+                } else {
+                    suggestionsArea.innerHTML = '';
+                }
             });
             document.getElementById('btn-clear').addEventListener('click', () => {
+                committedText = '';
+                uncommittedText = '';
                 outputArea.innerHTML = '';
+                suggestionsArea.innerHTML = '';
             });
             document.getElementById('btn-toggle-kana').addEventListener('click', toggleKanaMode);
 
             document.getElementById('btn-search').addEventListener('click', () => {
-                const text = outputArea.innerText;
+                const text = committedText + uncommittedText;
                 if (!text.trim()) {
                     showNotification('検索するテキストがありません', 'error');
                     return;
@@ -521,7 +603,7 @@
             });
 
             document.getElementById('btn-copy').addEventListener('click', () => {
-                const text = outputArea.innerText;
+                const text = committedText + uncommittedText;
                 if (!text) {
                     showNotification('コピーするテキストがありません', 'error');
                     return;
@@ -557,7 +639,7 @@
             }
 
             document.getElementById('btn-save').addEventListener('click', () => {
-                const text = outputArea.innerText;
+                const text = committedText + uncommittedText;
                 if (!text) {
                     showNotification('保存するテキストがありません', 'error');
                     return;
@@ -565,7 +647,7 @@
                 const now = new Date();
                 const formattedDate = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
                 const filename = `フリック入力_${formattedDate}.txt`;
-                
+
                 const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -584,6 +666,60 @@
                 setTimeout(() => {
                     notification.className = '';
                 }, 3000);
+            }
+
+            // 未確定テキストの変更を監視（キーボード入力時）
+            outputArea.addEventListener('input', (e) => {
+                // ユーザーが直接編集した場合の処理
+                const fullText = outputArea.innerText;
+                const expectedText = committedText + uncommittedText;
+
+                if (fullText !== expectedText) {
+                    // 直接編集された場合は全て確定テキストとして扱う
+                    committedText = fullText;
+                    uncommittedText = '';
+                    suggestionsArea.innerHTML = '';
+                }
+            });
+
+            // 未確定テキストが変更されたときに変換候補を取得
+            function updateSuggestions() {
+                if (isKatakana || !uncommittedText) {
+                    suggestionsArea.innerHTML = '';
+                    return;
+                }
+                fetchKanjiSuggestions(uncommittedText);
+            }
+
+            async function fetchKanjiSuggestions(text) {
+                const url = `https://www.google.com/transliterate?langpair=ja-Hira|ja&text=${encodeURIComponent(text)}`;
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    displaySuggestions(data);
+                } catch (error) {
+                    console.error('Error fetching kanji suggestions:', error);
+                }
+            }
+
+            function displaySuggestions(data) {
+                suggestionsArea.innerHTML = '';
+                if (data && data.length > 0) {
+                    const uniqueSuggestions = [...new Set(data[0][1])];
+                    uniqueSuggestions.forEach(suggestion => {
+                        const suggestionDiv = document.createElement('div');
+                        suggestionDiv.className = 'suggestion';
+                        suggestionDiv.textContent = suggestion;
+                        suggestionDiv.addEventListener('click', () => {
+                            // 未確定テキストを変換候補で置き換えて確定
+                            committedText += suggestion;
+                            uncommittedText = '';
+                            updateOutputArea();
+                            suggestionsArea.innerHTML = '';
+                        });
+                        suggestionsArea.appendChild(suggestionDiv);
+                    });
+                }
             }
 
             createKeyboard();
