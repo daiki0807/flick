@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -38,7 +39,8 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
-            touch-action: manipulation; /* Prevents zoom, allows panning */
+            touch-action: manipulation;
+            /* Prevents zoom, allows panning */
         }
 
         .container {
@@ -135,16 +137,45 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
-        #btn-space { background-color: var(--btn-space); }
-        #btn-delete { background-color: var(--btn-delete); }
-        #btn-clear { background-color: var(--btn-clear); }
-        #btn-toggle-kana { background-color: #e67e22; }
-        #btn-confirm { background-color: #3498db; }
-        #btn-comma { background-color: #1abc9c; }
-        #btn-period { background-color: #16a085; }
-        #btn-search { background-color: var(--btn-search); }
-        #btn-copy { background-color: var(--btn-copy); }
-        #btn-save { background-color: var(--btn-save); }
+        #btn-space {
+            background-color: var(--btn-space);
+        }
+
+        #btn-delete {
+            background-color: var(--btn-delete);
+        }
+
+        #btn-clear {
+            background-color: var(--btn-clear);
+        }
+
+        #btn-toggle-kana {
+            background-color: #e67e22;
+        }
+
+        #btn-confirm {
+            background-color: #3498db;
+        }
+
+        #btn-comma {
+            background-color: #1abc9c;
+        }
+
+        #btn-period {
+            background-color: #16a085;
+        }
+
+        #btn-search {
+            background-color: var(--btn-search);
+        }
+
+        #btn-copy {
+            background-color: var(--btn-copy);
+        }
+
+        #btn-save {
+            background-color: var(--btn-save);
+        }
 
         #keyboard {
             display: flex;
@@ -154,7 +185,8 @@
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            touch-action: none; /* Disable scrolling on keyboard */
+            touch-action: none;
+            /* Disable scrolling on keyboard */
         }
 
         .keyboard-row {
@@ -178,7 +210,7 @@
             position: relative;
             transition: background-color 0.1s;
         }
-        
+
         .key.active {
             background-color: var(--key-active-bg);
             color: var(--text-light);
@@ -210,11 +242,30 @@
             transition: transform 0.1s, background-color 0.1s;
         }
 
-        .flick-center { top: 70px; left: 70px; }
-        .flick-up { top: 0; left: 70px; }
-        .flick-left { top: 70px; left: 0; }
-        .flick-down { top: 140px; left: 70px; }
-        .flick-right { top: 70px; left: 140px; }
+        .flick-center {
+            top: 70px;
+            left: 70px;
+        }
+
+        .flick-up {
+            top: 0;
+            left: 70px;
+        }
+
+        .flick-left {
+            top: 70px;
+            left: 0;
+        }
+
+        .flick-down {
+            top: 140px;
+            left: 70px;
+        }
+
+        .flick-right {
+            top: 70px;
+            left: 140px;
+        }
 
         .flick-option.highlight {
             background-color: var(--key-active-bg);
@@ -247,28 +298,84 @@
             transform: translateY(0);
         }
 
-        #notification.success { background-color: var(--notification-success-bg); }
-        #notification.error { background-color: var(--notification-error-bg); }
+        #notification.success {
+            background-color: var(--notification-success-bg);
+        }
+
+        #notification.error {
+            background-color: var(--notification-error-bg);
+        }
 
         @media (max-width: 600px) {
-            body { padding: 10px; }
-            .container { gap: 10px; }
-            header h1 { font-size: 24px; }
-            #output-area { min-height: 120px; font-size: 20px; }
-            .btn { font-size: 14px; padding: 10px; }
-            .key { width: 60px; height: 60px; font-size: 20px; }
-            .flick-options { width: 180px; height: 180px; }
-            .flick-option { width: 60px; height: 60px; font-size: 18px; }
-            .flick-center { top: 60px; left: 60px; }
-            .flick-up { top: 0; left: 60px; }
-            .flick-left { top: 60px; left: 0; }
-            .flick-down { top: 120px; left: 60px; }
-            .flick-right { top: 60px; left: 120px; }
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                gap: 10px;
+            }
+
+            header h1 {
+                font-size: 24px;
+            }
+
+            #output-area {
+                min-height: 120px;
+                font-size: 20px;
+            }
+
+            .btn {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .key {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+            }
+
+            .flick-options {
+                width: 180px;
+                height: 180px;
+            }
+
+            .flick-option {
+                width: 60px;
+                height: 60px;
+                font-size: 18px;
+            }
+
+            .flick-center {
+                top: 60px;
+                left: 60px;
+            }
+
+            .flick-up {
+                top: 0;
+                left: 60px;
+            }
+
+            .flick-left {
+                top: 60px;
+                left: 0;
+            }
+
+            .flick-down {
+                top: 120px;
+                left: 60px;
+            }
+
+            .flick-right {
+                top: 60px;
+                left: 120px;
+            }
         }
     </style>
 </head>
+
 <body>
-    
+
     <div class="container">
         <header>
             <h1>📱 フリック入力キーボード</h1>
@@ -296,7 +403,7 @@
         <div id="keyboard">
             <!-- キーボードのキーはJSで生成 -->
         </div>
-        
+
         <p class="instructions">
             キーをタッチしたまま上下左右に指を動かして文字を選択し、指を離して入力します。
         </p>
@@ -329,7 +436,8 @@
                 'ら': { center: 'ら', up: 'り', right: 'る', down: 'れ', left: 'ろ' },
                 'わ': { center: 'わ', up: 'を', right: 'ん', down: '', left: '' },
                 '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
-                '小': { center: 'SMALL', up: 'SMALL', right: 'SMALL', down: 'SMALL', left: 'ー' },
+                '小': { center: 'SMALL' },
+                'ー': { center: 'ー' }
             };
 
             const katakanaKeyMap = {
@@ -344,7 +452,8 @@
                 'ラ': { center: 'ラ', up: 'リ', right: 'ル', down: 'レ', left: 'ロ' },
                 'ワ': { center: 'ワ', up: 'ヲ', right: 'ン', down: '', left: '' },
                 '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
-                '小': { center: 'SMALL', up: 'SMALL', right: 'SMALL', down: 'SMALL', left: 'ー' },
+                '小': { center: 'SMALL' },
+                'ー': { center: 'ー' }
             };
 
             const smallCharMap = {
@@ -369,13 +478,13 @@
             const hiraganaLayout = [
                 ['あ', 'か', 'さ', 'た', 'な'],
                 ['は', 'ま', 'や', 'ら', 'わ'],
-                ['゛゜', '', '小', '', '']
+                ['゛゜', 'ー', '小', '', '']
             ];
 
             const katakanaLayout = [
                 ['ア', 'カ', 'サ', 'タ', 'ナ'],
                 ['ハ', 'マ', 'ヤ', 'ラ', 'ワ'],
-                ['゛゜', '', '小', '', '']
+                ['゛゜', 'ー', '小', '', '']
             ];
 
             let keyLayout = hiraganaLayout;
@@ -473,7 +582,7 @@
                     return dy > 0 ? 'down' : 'up';
                 }
             }
-            
+
             function insertText(text) {
                 uncommittedText += text;
                 updateOutputArea();
@@ -501,11 +610,11 @@
                     e.preventDefault();
                     activeKey = target;
                     activeKey.classList.add('active');
-                    
+
                     const touch = e.touches ? e.touches[0] : e;
                     startX = touch.clientX;
                     startY = touch.clientY;
-                    
+
                     const flickOptions = activeKey.querySelector('.flick-options');
                     if (flickOptions) {
                         flickOptions.style.display = 'block';
@@ -579,13 +688,13 @@
                 if (flickOptions) {
                     flickOptions.style.display = 'none';
                 }
-                
+
                 activeKey.classList.remove('active');
                 highlightFlickOption(null);
                 activeKey = null;
                 flickDir = 'center';
             }
-            
+
             function highlightFlickOption(dir) {
                 if (!activeKey) return;
                 const options = activeKey.querySelectorAll('.flick-option');
@@ -695,7 +804,7 @@
                     fallbackCopy(text);
                 }
             });
-            
+
             function fallbackCopy(text) {
                 const textArea = document.createElement('textarea');
                 textArea.value = text;
@@ -803,4 +912,5 @@
         });
     </script>
 </body>
+
 </html>
