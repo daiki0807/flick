@@ -329,7 +329,7 @@
                 'ら': { center: 'ら', up: 'り', right: 'る', down: 'れ', left: 'ろ' },
                 'わ': { center: 'わ', up: 'を', right: 'ん', down: '', left: '' },
                 '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
-                '小': { center: 'っ', up: 'ゃ', right: 'ゅ', down: 'ょ', left: 'ー' },
+                '小': { center: 'SMALL', up: 'SMALL', right: 'SMALL', down: 'SMALL', left: 'ー' },
             };
 
             const katakanaKeyMap = {
@@ -344,7 +344,21 @@
                 'ラ': { center: 'ラ', up: 'リ', right: 'ル', down: 'レ', left: 'ロ' },
                 'ワ': { center: 'ワ', up: 'ヲ', right: 'ン', down: '', left: '' },
                 '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
-                '小': { center: 'ッ', up: 'ャ', right: 'ュ', down: 'ョ', left: 'ー' },
+                '小': { center: 'SMALL', up: 'SMALL', right: 'SMALL', down: 'SMALL', left: 'ー' },
+            };
+
+            const smallCharMap = {
+                'あ': 'ぁ', 'い': 'ぃ', 'う': 'ぅ', 'え': 'ぇ', 'お': 'ぉ',
+                'か': 'ゕ', 'け': 'ゖ', 'つ': 'っ',
+                'や': 'ゃ', 'ゆ': 'ゅ', 'よ': 'ょ',
+                'わ': 'ゎ'
+            };
+
+            const katakanaSmallCharMap = {
+                'ア': 'ァ', 'イ': 'ィ', 'ウ': 'ゥ', 'エ': 'ェ', 'オ': 'ォ',
+                'カ': 'ヵ', 'ケ': 'ヶ', 'ツ': 'ッ',
+                'ヤ': 'ャ', 'ユ': 'ュ', 'ヨ': 'ョ',
+                'ワ': 'ヮ'
             };
 
             let isKatakana = false;
@@ -438,7 +452,13 @@
                     if (char) {
                         const optionDiv = document.createElement('div');
                         optionDiv.className = `flick-option flick-${dir}`;
-                        optionDiv.textContent = char;
+                        // 'SMALL' コマンドの場合は表示文字を調整
+                        if (char === 'SMALL') {
+                            optionDiv.textContent = '小';
+                            optionDiv.style.fontSize = '18px';
+                        } else {
+                            optionDiv.textContent = char;
+                        }
                         container.appendChild(optionDiv);
                     }
                 });
@@ -518,7 +538,26 @@
                 const selectedChar = options[flickDir] || options['center'];
 
                 if (selectedChar) {
-                    if (selectedChar === '゛' || selectedChar === '゜') {
+                    if (selectedChar === 'SMALL') {
+                        // 小文字変換処理
+                        const fullText = committedText + uncommittedText;
+                        const lastChar = fullText.slice(-1);
+                        const map = isKatakana ? katakanaSmallCharMap : smallCharMap;
+                        const newChar = map[lastChar];
+
+                        if (newChar) {
+                            if (uncommittedText.length > 0) {
+                                uncommittedText = uncommittedText.slice(0, -1) + newChar;
+                            } else if (committedText.length > 0) {
+                                committedText = committedText.slice(0, -1) + newChar;
+                            }
+                            updateOutputArea();
+                        } else {
+                            // 変換できない文字の場合は「っ」または「ッ」を入力（または何もしない）
+                            // ここでは利便性のため「っ/ッ」を入力するようにします
+                            insertText(isKatakana ? 'ッ' : 'っ');
+                        }
+                    } else if (selectedChar === '゛' || selectedChar === '゜') {
                         const fullText = committedText + uncommittedText;
                         const lastChar = fullText.slice(-1);
                         const map = (selectedChar === '゛') ? dakutenMap : handakutenMap;
