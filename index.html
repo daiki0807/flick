@@ -9,367 +9,308 @@
         :root {
             --bg-grad-start: #667eea;
             --bg-grad-end: #764ba2;
-            --key-bg: #ffffff;
-            --key-border: #cccccc;
+            --key-bg: #fff;
+            --key-border: #ccc;
             --key-active-bg: #667eea;
-            --text-light: #ffffff;
-            --text-dark: #333333;
-            --btn-space: #4ecdc4;
-            --btn-delete: #ffa502;
-            --btn-clear: #ff6b6b;
-            --btn-search: #4285f4;
-            --btn-copy: #34a853;
-            --btn-save: #9b59b6;
-            --notification-success-bg: #2ecc71;
-            --notification-error-bg: #e74c3c;
+            --text-light: #fff;
+            --text-dark: #333;
+            --btn-space: #218d86;
+            --btn-delete: #a75e00;
+            --btn-clear: #c43b3b;
+            --btn-search: #2860b9;
+            --btn-copy: #247a3c;
+            --btn-save: #7d4096;
+            --notification-success-bg: #247a3c;
+            --notification-error-bg: #c43b3b;
         }
-
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
+            padding-top: max(10px, env(safe-area-inset-top));
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
             background: linear-gradient(45deg, var(--bg-grad-start), var(--bg-grad-end));
             color: var(--text-light);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
             touch-action: manipulation;
-            /* Prevents zoom, allows panning */
         }
-
+        button, select, textarea { font-family: inherit; }
+        button, select, summary { -webkit-tap-highlight-color: transparent; }
+        button, select, summary { cursor: pointer; }
+        button:focus-visible, select:focus-visible, summary:focus-visible {
+            outline: 3px solid #ffe27a;
+            outline-offset: 2px;
+        }
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 1100px;
+            height: 100%;
+            margin: 0 auto;
+            display: grid;
+            grid-template-rows: 44px minmax(0, 1fr);
+            gap: 10px;
+        }
+        header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        header h1 { margin: 0; font-size: clamp(17px, 3vw, 24px); white-space: nowrap; }
+        .app-menu { position: relative; z-index: 30; }
+        .app-menu summary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,.2);
+            font-weight: bold;
+            list-style: none;
+            white-space: nowrap;
+        }
+        .app-menu summary::-webkit-details-marker { display: none; }
+        .menu-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: min(290px, calc(100vw - 24px));
+            max-height: calc(100dvh - 88px);
+            overflow-y: auto;
+            padding: 14px;
+            border-radius: 12px;
+            background: #fff;
+            color: var(--text-dark);
+            box-shadow: 0 6px 30px rgba(0,0,0,.3);
+        }
+        .menu-panel .btn { width: 100%; margin-bottom: 8px; }
+        .menu-panel p { margin: 10px 0 0; font-size: 14px; line-height: 1.6; }
+        .workspace {
+            display: grid;
+            grid-template-rows: minmax(178px, 1fr) auto;
+            gap: 10px;
+            min-height: 0;
+        }
+        .editor-panel {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 8px;
+            min-width: 0;
+            min-height: 0;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 28px;
-        }
-
-        header p {
-            margin: 5px 0 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
         #output-area {
-            background: var(--key-bg);
-            min-height: 150px;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 24px;
-            color: var(--text-dark);
-            border: 1px solid var(--key-border);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            overflow-wrap: break-word;
-            word-break: break-all;
-        }
-
-        .uncommitted-text {
-            text-decoration: underline;
-            text-decoration-style: dotted;
-            text-decoration-color: #667eea;
-        }
-
-        #suggestions-area {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            min-height: 40px;
-        }
-
-        .suggestion {
-            background-color: var(--key-bg);
-            color: var(--text-dark);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .suggestion:hover {
-            background-color: var(--key-active-bg);
-            color: var(--text-light);
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 10px;
-        }
-
-        .btn {
+            flex: 1;
+            width: 100%;
+            min-height: 70px;
+            resize: none;
             padding: 12px;
+            border: 1px solid var(--key-border);
+            border-radius: 12px;
+            background: #fff;
+            color: var(--text-dark);
+            font-size: 24px;
+            line-height: 1.6;
+            -webkit-user-select: text;
+            user-select: text;
+            overflow: auto;
+        }
+        .editor-tools {
+            display: grid;
+            grid-template-columns: 44px 44px minmax(0, 1fr);
+            align-items: center;
+            gap: 6px;
+            min-height: 44px;
+        }
+        .cursor-btn, #btn-retry, #layout-select {
+            min-height: 44px;
+            border: 1px solid var(--key-border);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--text-dark);
+            font-size: 15px;
+        }
+        .cursor-btn { padding: 0; font-size: 20px; }
+        #composition-status { margin: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .conversion-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 48px;
+            min-height: 48px;
+            padding: 2px;
+            border-radius: 8px;
+            background: rgba(255,255,255,.12);
+            overflow: hidden;
+        }
+        #suggestions-area {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 44px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+        }
+        #suggestions-area:empty { display: none; }
+        .suggestion {
+            flex: 0 0 auto;
+            min-height: 44px;
+            max-width: 100%;
+            padding: 6px 12px;
+            border: 0;
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text-dark);
+            font-size: 18px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .suggestion:hover { background: #e3e8ff; }
+        #suggestions-status { flex: 1; margin: 0; padding-left: 6px; font-size: 13px; }
+        #suggestions-status:empty { display: none; }
+        #btn-retry { flex: 0 0 auto; padding: 6px 10px; font-size: 14px; }
+        [hidden] { display: none !important; }
+        .keyboard-panel {
+            display: grid;
+            grid-template-rows: 44px auto auto;
+            gap: 8px;
+            min-width: 0;
+            min-height: 0;
+        }
+        .layout-settings { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .layout-settings label { font-size: 14px; white-space: nowrap; }
+        #layout-select { flex: 1; min-width: 0; padding: 6px 8px; }
+        .typing-actions { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+        .typing-actions .btn { padding: 6px 4px; white-space: nowrap; }
+        .btn {
+            min-height: 44px;
+            padding: 6px 8px;
+            border: 0;
+            border-radius: 8px;
+            color: #fff;
             font-size: 16px;
             font-weight: bold;
-            color: var(--text-light);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.2s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,.15);
         }
-
-        .btn:hover {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn:active {
-            transform: scale(0.96);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        #btn-space {
-            background-color: var(--btn-space);
-        }
-
-        #btn-delete {
-            background-color: var(--btn-delete);
-        }
-
-        #btn-clear {
-            background-color: var(--btn-clear);
-        }
-
-        #btn-toggle-kana {
-            background-color: #e67e22;
-        }
-
-        #btn-confirm {
-            background-color: #3498db;
-        }
-
-        #btn-comma {
-            background-color: #1abc9c;
-        }
-
-        #btn-period {
-            background-color: #16a085;
-        }
-
-        #btn-search {
-            background-color: var(--btn-search);
-        }
-
-        #btn-copy {
-            background-color: var(--btn-copy);
-        }
-
-        #btn-save {
-            background-color: var(--btn-save);
-        }
-
+        .btn:active { transform: scale(.96); }
+        #btn-space { background: var(--btn-space); }
+        #btn-delete { background: var(--btn-delete); }
+        #btn-clear { background: var(--btn-clear); }
+        #btn-toggle-kana { background: #a64c00; }
+        #btn-confirm { background: #2860b9; }
+        #btn-comma, #btn-period, #btn-long-vowel { background: #217268; }
+        #btn-search { background: var(--btn-search); }
+        #btn-copy { background: var(--btn-copy); }
+        #btn-save { background: var(--btn-save); }
         #keyboard {
+            --key-size: min(76px, calc((100vw - 80px) / 5), max(44px, calc((100dvh - 400px) / 3)));
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            padding: 15px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            touch-action: none;
-            /* Disable scrolling on keyboard */
-        }
-
-        .keyboard-row {
-            display: flex;
+            align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            padding: 12px;
+            min-width: 0;
+            border-radius: 12px;
+            background: rgba(255,255,255,.12);
+            touch-action: none;
         }
-
+        #keyboard[data-layout="smartphone"] {
+            --key-size: min(76px, calc((100vw - 80px) / 3), max(44px, calc((100dvh - 470px) / 4)));
+        }
+        .keyboard-row { display: flex; justify-content: center; gap: 8px; }
         .key {
-            width: 70px;
-            height: 70px;
-            background-color: var(--key-bg);
+            flex: 0 0 var(--key-size);
+            width: var(--key-size);
+            height: var(--key-size);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border: 1px solid var(--key-border);
             border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
+            background: var(--key-bg);
             color: var(--text-dark);
-            cursor: pointer;
+            font-size: clamp(20px, 3vw, 30px);
             position: relative;
-            transition: background-color 0.1s;
         }
-
-        .key.active {
-            background-color: var(--key-active-bg);
-            color: var(--text-light);
-        }
-
+        .key.active { background: var(--key-active-bg); color: #fff; }
+        .key-placeholder { visibility: hidden; }
         .flick-options {
+            --option-size: min(52px, var(--key-size));
             position: absolute;
-            width: 210px;
-            height: 210px;
-            top: 50%;
-            left: 50%;
+            width: calc(var(--option-size) * 3);
+            height: calc(var(--option-size) * 3);
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             display: none;
-            z-index: 10;
+            z-index: 20;
         }
-
         .flick-option {
             position: absolute;
-            width: 70px;
-            height: 70px;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            border-radius: 10px;
+            width: var(--option-size);
+            height: var(--option-size);
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(0,0,0,.78);
+            color: #fff;
             font-size: 22px;
-            transition: transform 0.1s, background-color 0.1s;
         }
-
-        .flick-center {
-            top: 70px;
-            left: 70px;
-        }
-
-        .flick-up {
-            top: 0;
-            left: 70px;
-        }
-
-        .flick-left {
-            top: 70px;
-            left: 0;
-        }
-
-        .flick-down {
-            top: 140px;
-            left: 70px;
-        }
-
-        .flick-right {
-            top: 70px;
-            left: 140px;
-        }
-
-        .flick-option.highlight {
-            background-color: var(--key-active-bg);
-            transform: scale(1.1);
-        }
-
-        .instructions {
-            text-align: center;
-            font-size: 12px;
-            margin-top: 10px;
-            opacity: 0.8;
-        }
-
+        .flick-center { top: var(--option-size); left: var(--option-size); }
+        .flick-up { top: 0; left: var(--option-size); }
+        .flick-left { top: var(--option-size); left: 0; }
+        .flick-down { top: calc(var(--option-size) * 2); left: var(--option-size); }
+        .flick-right { top: var(--option-size); left: calc(var(--option-size) * 2); }
+        .flick-option.highlight { background: var(--key-active-bg); outline: 2px solid #fff; }
         #notification {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
+            top: 12px; left: 50%;
+            max-width: calc(100vw - 24px);
+            padding: 12px 18px;
             border-radius: 8px;
-            color: white;
+            color: #fff;
             font-weight: bold;
-            z-index: 1000;
+            z-index: 100;
             opacity: 0;
-            transform: translateY(-20px);
-            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            transform: translate(-50%, -20px);
+            transition: opacity .2s, transform .2s;
         }
-
-        #notification.show {
-            opacity: 1;
-            transform: translateY(0);
+        #notification.show { opacity: 1; transform: translate(-50%, 0); }
+        #notification.success { background: var(--notification-success-bg); }
+        #notification.error { background: var(--notification-error-bg); }
+        @media (min-width: 760px) and (min-aspect-ratio: 1/1) {
+            .workspace { grid-template-columns: minmax(260px,.8fr) minmax(440px,1.2fr); grid-template-rows: minmax(0,1fr); }
+            .keyboard-panel { container-type: inline-size; grid-template-columns: minmax(0,1fr) 128px; grid-template-rows: 44px minmax(0,1fr); }
+            .layout-settings { grid-column: 1 / -1; }
+            #keyboard { --key-size: min(76px, calc((100vw - 460px) / 5), calc((100dvh - 216px) / 3)); }
+            #keyboard[data-layout="smartphone"] { --key-size: min(92px, calc((100vw - 460px) / 3), calc((100dvh - 240px) / 4)); }
+            .typing-actions { grid-template-columns: repeat(2,minmax(0,1fr)); align-content: center; }
+            .typing-actions .btn { padding: 8px 2px; font-size: 14px; }
+            #btn-long-vowel { grid-column: 1 / -1; }
+            #output-area { font-size: 28px; }
+            @supports (width: 1cqw) {
+                #keyboard { --key-size: min(76px, calc((100cqw - 192px) / 5), calc((100dvh - 216px) / 3)); }
+                #keyboard[data-layout="smartphone"] { --key-size: min(92px, calc((100cqw - 176px) / 3), calc((100dvh - 240px) / 4)); }
+            }
         }
-
-        #notification.success {
-            background-color: var(--notification-success-bg);
+        @media (max-width: 400px) {
+            #output-area { font-size: 20px; }
+            .btn { font-size: 14px; }
+            #composition-status { font-size: 12px; }
         }
-
-        #notification.error {
-            background-color: var(--notification-error-bg);
-        }
-
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                gap: 10px;
-            }
-
-            header h1 {
-                font-size: 24px;
-            }
-
-            #output-area {
-                min-height: 120px;
-                font-size: 20px;
-            }
-
-            .btn {
-                font-size: 14px;
-                padding: 10px;
-            }
-
-            .key {
-                width: 60px;
-                height: 60px;
-                font-size: 20px;
-            }
-
-            .flick-options {
-                width: 180px;
-                height: 180px;
-            }
-
-            .flick-option {
-                width: 60px;
-                height: 60px;
-                font-size: 18px;
-            }
-
-            .flick-center {
-                top: 60px;
-                left: 60px;
-            }
-
-            .flick-up {
-                top: 0;
-                left: 60px;
-            }
-
-            .flick-left {
-                top: 60px;
-                left: 0;
-            }
-
-            .flick-down {
-                top: 120px;
-                left: 60px;
-            }
-
-            .flick-right {
-                top: 60px;
-                left: 120px;
-            }
+        /* Very short portrait windows retain scroll rather than hiding writing controls. */
+        @media (max-height: 639px) and (orientation: portrait) {
+            body { height: auto; min-height: 100vh; min-height: 100dvh; overflow: auto; }
+            .container { min-height: calc(100dvh - 20px); }
+            .workspace { grid-template-rows: minmax(178px,1fr) auto; }
         }
     </style>
 </head>
@@ -378,537 +319,610 @@
 
     <div class="container">
         <header>
-            <h1>📱 フリック入力キーボード</h1>
-            <p>タッチしてフリック操作で入力</p>
+            <h1>📱 フリック入力</h1>
+            <details class="app-menu" id="app-menu">
+                <summary>メニュー</summary>
+                <div class="menu-panel">
+                    <button type="button" class="btn" id="btn-copy">📋 コピー</button>
+                    <button type="button" class="btn" id="btn-save">💾 ほぞん</button>
+                    <button type="button" class="btn" id="btn-search">🔍 Google検索</button>
+                    <button type="button" class="btn" id="btn-clear">クリア</button>
+                    <p id="layout-help"></p>
+                    <p>キーを押したまま上下左右に指を動かし、指を離すと入力できます。</p>
+                    <p>文章が長くなったときは、白い入力欄の中をスクロールして読み返せます。</p>
+                </div>
+            </details>
         </header>
-
-        <div id="output-area" contenteditable="true"></div>
-        <div id="suggestions-area"></div>
-
-        <div class="button-grid">
-            <button class="btn" id="btn-space">スペース</button>
-            <button class="btn" id="btn-delete">さくじょ</button>
-            <button class="btn" id="btn-clear">クリア</button>
-            <button class="btn" id="btn-toggle-kana">カナ</button>
-            <button class="btn" id="btn-confirm">かくてい</button>
-            <button class="btn" id="btn-comma">、</button>
-            <button class="btn" id="btn-period">。</button>
-        </div>
-        <div class="button-grid">
-            <button class="btn" id="btn-search">🔍 Google検索</button>
-            <button class="btn" id="btn-copy">📋 コピー</button>
-            <button class="btn" id="btn-save">💾 ほぞん</button>
-        </div>
-
-        <div id="keyboard">
-            <!-- キーボードのキーはJSで生成 -->
-        </div>
-
-        <p class="instructions">
-            キーをタッチしたまま上下左右に指を動かして文字を選択し、指を離して入力します。
-        </p>
+        <main class="workspace">
+            <section class="editor-panel" aria-label="文章の入力と変換">
+                <textarea id="output-area" rows="3" inputmode="none" spellcheck="false"
+                    aria-label="入力した文章" aria-describedby="composition-status"
+                    placeholder="ここをタップして、直したい位置を選べます"></textarea>
+                <div class="editor-tools">
+                    <button type="button" class="cursor-btn" id="btn-cursor-left" aria-label="カーソルを1文字左へ">◀</button>
+                    <button type="button" class="cursor-btn" id="btn-cursor-right" aria-label="カーソルを1文字右へ">▶</button>
+                    <p id="composition-status" role="status">入力欄で位置を選べます。</p>
+                </div>
+                <div class="conversion-bar">
+                    <div id="suggestions-area" aria-label="漢字の変換候補"></div>
+                    <p id="suggestions-status" role="status"></p>
+                    <button type="button" id="btn-retry" hidden>再取得</button>
+                </div>
+            </section>
+            <section class="keyboard-panel" aria-label="文字を入力するキー">
+                <div class="layout-settings">
+                    <label for="layout-select">キー配置</label>
+                    <select id="layout-select" aria-describedby="layout-help">
+                        <option value="legacy">今の配置（5列）</option>
+                        <option value="smartphone">スマホ型（3列）</option>
+                    </select>
+                </div>
+                <div id="keyboard" aria-label="フリックキーボード"></div>
+                <div class="typing-actions">
+                    <button type="button" class="btn" id="btn-toggle-kana">カナ</button>
+                    <button type="button" class="btn" id="btn-delete">さくじょ</button>
+                    <button type="button" class="btn" id="btn-comma">、</button>
+                    <button type="button" class="btn" id="btn-period">。</button>
+                    <button type="button" class="btn" id="btn-space">スペース</button>
+                    <button type="button" class="btn" id="btn-confirm">かくてい</button>
+                    <button type="button" class="btn" id="btn-long-vowel">ー</button>
+                </div>
+            </section>
+        </main>
     </div>
 
     <div id="notification"></div>
 
     <script>
+        // UTF-16 offsets match textarea selectionStart/End; grapheme boundaries keep emoji intact.
+        const graphemeSegmenter = typeof Intl.Segmenter === 'function'
+            ? new Intl.Segmenter('ja', { granularity: 'grapheme' }) : null;
+        function characterSegments(text) {
+            if (graphemeSegmenter) return graphemeSegmenter.segment(text);
+            let index = 0;
+            return Array.from(text, character => {
+                const part = { index };
+                index += character.length;
+                return part;
+            });
+        }
+        function previousCharacter(text, position) {
+            let previous = 0;
+            for (const part of characterSegments(text)) {
+                if (part.index >= position) break;
+                previous = part.index;
+            }
+            return previous;
+        }
+        function nextCharacter(text, position) {
+            for (const part of characterSegments(text)) {
+                if (part.index > position) return part.index;
+            }
+            return text.length;
+        }
+
+        class FlickEditor {
+            constructor() {
+                this.text = '';
+                this.start = 0;
+                this.end = 0;
+                this.composition = null;
+                this.revision = 0;
+            }
+            get reading() {
+                return this.composition ? this.text.slice(this.composition.start, this.composition.end) : '';
+            }
+            setSelection(start, end = start) {
+                start = Math.max(0, Math.min(start, this.text.length));
+                end = Math.max(start, Math.min(end, this.text.length));
+                if (this.start === start && this.end === end) return false;
+                this.start = start;
+                this.end = end;
+                if (this.composition && (start < this.composition.start || end > this.composition.end)) {
+                    this.composition = null;
+                }
+                this.revision++;
+                return true;
+            }
+            setText(text, start, end = start) {
+                this.text = text;
+                this.composition = null;
+                this.start = Math.max(0, Math.min(start, text.length));
+                this.end = Math.max(this.start, Math.min(end, text.length));
+                this.revision++;
+            }
+            commit() {
+                this.composition = null;
+                this.revision++;
+            }
+            replaceRange(start, end, value, composing) {
+                let range = this.composition;
+                const inside = range && start >= range.start && end <= range.end;
+                this.text = this.text.slice(0, start) + value + this.text.slice(end);
+                if (composing) {
+                    range = inside
+                        ? { start: range.start, end: range.end + value.length - (end - start) }
+                        : { start, end: start + value.length };
+                    this.composition = range.end > range.start ? range : null;
+                } else {
+                    this.composition = null;
+                }
+                this.start = this.end = start + value.length;
+                this.revision++;
+            }
+            insert(value, composing = true) {
+                this.replaceRange(this.start, this.end, value, composing);
+            }
+            deleteBackward() {
+                if (!this.start && !this.end) return;
+                const start = this.start === this.end ? previousCharacter(this.text, this.start) : this.start;
+                const inside = this.composition && start >= this.composition.start && this.end <= this.composition.end;
+                this.replaceRange(start, this.end, '', Boolean(inside));
+            }
+            modify(map, fallback = '') {
+                const start = this.start === this.end ? previousCharacter(this.text, this.start) : this.start;
+                const character = this.text.slice(start, this.end);
+                if (Object.hasOwn(map, character)) {
+                    this.replaceRange(start, this.end, map[character], true);
+                } else if (fallback) {
+                    this.insert(fallback);
+                }
+            }
+            moveCursor(direction) {
+                const position = this.start !== this.end
+                    ? (direction < 0 ? this.start : this.end)
+                    : (direction < 0 ? previousCharacter(this.text, this.start) : nextCharacter(this.text, this.end));
+                this.setSelection(position);
+            }
+            convertPrefix(reading, prefix, replacement) {
+                if (!this.composition || this.reading !== reading || !prefix || !reading.startsWith(prefix)) return false;
+                const { start, end } = this.composition;
+                this.text = this.text.slice(0, start) + replacement + this.text.slice(start + prefix.length);
+                const convertedEnd = start + replacement.length;
+                const remainingEnd = end + replacement.length - prefix.length;
+                this.composition = remainingEnd > convertedEnd ? { start: convertedEnd, end: remainingEnd } : null;
+                this.start = this.end = remainingEnd;
+                this.revision++;
+                return true;
+            }
+        }
+
+        function parseSuggestions(data, reading) {
+            // The service may split a sentence into segments. Convert only the offered prefix.
+            if (!Array.isArray(data) || !data.length || data.some(part =>
+                !Array.isArray(part) || typeof part[0] !== 'string' || !Array.isArray(part[1]))) {
+                throw new Error('Invalid conversion response');
+            }
+            if (data.map(part => part[0]).join('') !== reading || !data[0][0]) {
+                throw new Error('Conversion reading mismatch');
+            }
+            return {
+                prefix: data[0][0],
+                candidates: [...new Set(data[0][1].filter(value => typeof value === 'string' && value.length))]
+            };
+        }
+
+        function createSuggestionController({ fetcher, onResult, onStatus, delay = 180, timeout = 8000,
+            schedule = setTimeout, unschedule = clearTimeout }) {
+            let generation = 0;
+            let debounceTimer;
+            let timeoutTimer;
+            let controller;
+            function cancel() {
+                generation++;
+                unschedule(debounceTimer);
+                unschedule(timeoutTimer);
+                controller?.abort();
+                controller = null;
+            }
+            function update(reading) {
+                cancel();
+                onResult(null);
+                if (!reading) {
+                    onStatus('idle');
+                    return;
+                }
+                const request = generation;
+                onStatus('loading');
+                debounceTimer = schedule(async () => {
+                    const ownController = new AbortController();
+                    controller = ownController;
+                    timeoutTimer = schedule(() => {
+                        if (generation !== request) return;
+                        generation++;
+                        ownController.abort();
+                        onStatus('error');
+                    }, timeout);
+                    try {
+                        const response = await fetcher(
+                            `https://www.google.com/transliterate?langpair=ja-Hira|ja&text=${encodeURIComponent(reading)}`,
+                            { signal: ownController.signal });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        if (generation !== request) return;
+                        const result = parseSuggestions(data, reading);
+                        onResult({ ...result, reading });
+                        onStatus(result.candidates.length ? 'ready' : 'empty');
+                    } catch (error) {
+                        if (generation === request) onStatus('error');
+                    } finally {
+                        if (generation === request) {
+                            unschedule(timeoutTimer);
+                            controller = null;
+                        }
+                    }
+                }, delay);
+            }
+            return { update, cancel };
+        }
+
+        const legacyKeyMap = {
+            'あ': { center: 'あ', up: 'い', right: 'う', down: 'え', left: 'お' },
+            'か': { center: 'か', up: 'き', right: 'く', down: 'け', left: 'こ' },
+            'さ': { center: 'さ', up: 'し', right: 'す', down: 'せ', left: 'そ' },
+            'た': { center: 'た', up: 'ち', right: 'つ', down: 'て', left: 'と' },
+            'な': { center: 'な', up: 'に', right: 'ぬ', down: 'ね', left: 'の' },
+            'は': { center: 'は', up: 'ひ', right: 'ふ', down: 'へ', left: 'ほ' },
+            'ま': { center: 'ま', up: 'み', right: 'む', down: 'め', left: 'も' },
+            'や': { center: 'や', up: 'ゆ', right: 'よ', down: '', left: '' },
+            'ら': { center: 'ら', up: 'り', right: 'る', down: 'れ', left: 'ろ' },
+            'わ': { center: 'わ', up: 'を', right: 'ん', down: '', left: '' },
+            '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
+            '小': { center: 'SMALL' },
+            'ー': { center: 'ー' }
+        };
+        function toKatakana(value) {
+            return value.replace(/[ぁ-ゖ]/g, char => String.fromCharCode(char.charCodeAt(0) + 0x60));
+        }
+        function getKeyboardConfig(layout, katakana = false) {
+            const map = {};
+            for (const [key, options] of Object.entries(legacyKeyMap)) {
+                let arranged = { ...options };
+                if (layout === 'smartphone' && /^[あ-わ]$/.test(key)) {
+                    arranged = { center: options.center, left: options.up, up: options.right,
+                        right: options.down, down: options.left };
+                    if (key === 'や') arranged = { center: 'や', up: 'ゆ', down: 'よ', left: '', right: '' };
+                    if (key === 'わ') arranged = { center: 'わ', left: 'を', up: 'ん', right: 'ー', down: '' };
+                }
+                map[katakana ? toKatakana(key) : key] = Object.fromEntries(Object.entries(arranged)
+                    .map(([direction, value]) => [direction, katakana ? toKatakana(value) : value]));
+            }
+            const rows = layout === 'smartphone'
+                ? [['あ', 'か', 'さ'], ['た', 'な', 'は'], ['ま', 'や', 'ら'], ['゛゜', 'わ', '小']]
+                : [['あ', 'か', 'さ', 'た', 'な'], ['は', 'ま', 'や', 'ら', 'わ'], ['゛゜', 'ー', '小', '', '']];
+            return { map, rows: rows.map(row => row.map(key => katakana ? toKatakana(key) : key)) };
+        }
+
+        const smallCharMap = {
+            'あ': 'ぁ', 'い': 'ぃ', 'う': 'ぅ', 'え': 'ぇ', 'お': 'ぉ', 'か': 'ゕ', 'け': 'ゖ',
+            'つ': 'っ', 'や': 'ゃ', 'ゆ': 'ゅ', 'よ': 'ょ', 'わ': 'ゎ'
+        };
+        const smallMap = { ...smallCharMap,
+            ...Object.fromEntries(Object.entries(smallCharMap).map(([from, to]) => [to, from])) };
+        const dakutenMap = {
+            'か': 'が', 'き': 'ぎ', 'く': 'ぐ', 'け': 'げ', 'こ': 'ご',
+            'さ': 'ざ', 'し': 'じ', 'す': 'ず', 'せ': 'ぜ', 'そ': 'ぞ',
+            'た': 'だ', 'ち': 'ぢ', 'つ': 'づ', 'て': 'で', 'と': 'ど',
+            'は': 'ば', 'ひ': 'び', 'ふ': 'ぶ', 'へ': 'べ', 'ほ': 'ぼ', 'う': 'ゔ'
+        };
+        const handakutenMap = { 'は': 'ぱ', 'ひ': 'ぴ', 'ふ': 'ぷ', 'へ': 'ぺ', 'ほ': 'ぽ' };
+        function withKatakana(map) {
+            return { ...map, ...Object.fromEntries(Object.entries(map).map(([from, to]) => [toKatakana(from), toKatakana(to)])) };
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const outputArea = document.getElementById('output-area');
             const keyboard = document.getElementById('keyboard');
             const notification = document.getElementById('notification');
             const suggestionsArea = document.getElementById('suggestions-area');
-
-            const flickThreshold = 20;
+            const compositionStatus = document.getElementById('composition-status');
+            const suggestionsStatus = document.getElementById('suggestions-status');
+            const retryButton = document.getElementById('btn-retry');
+            const layoutSelect = document.getElementById('layout-select');
+            const editor = new FlickEditor();
+            let isKatakana = false;
+            let rendering = false;
+            let nativeComposing = false;
             let activeKey = null;
+            let activePointer = null;
             let startX = 0;
             let startY = 0;
             let flickDir = 'center';
+            let keyMap;
+            let notificationTimer;
 
-            const hiraganaKeyMap = {
-                'あ': { center: 'あ', up: 'い', right: 'う', down: 'え', left: 'お' },
-                'か': { center: 'か', up: 'き', right: 'く', down: 'け', left: 'こ' },
-                'さ': { center: 'さ', up: 'し', right: 'す', down: 'せ', left: 'そ' },
-                'た': { center: 'た', up: 'ち', right: 'つ', down: 'て', left: 'と' },
-                'な': { center: 'な', up: 'に', right: 'ぬ', down: 'ね', left: 'の' },
-                'は': { center: 'は', up: 'ひ', right: 'ふ', down: 'へ', left: 'ほ' },
-                'ま': { center: 'ま', up: 'み', right: 'む', down: 'め', left: 'も' },
-                'や': { center: 'や', up: 'ゆ', right: 'よ', down: '', left: '' },
-                'ら': { center: 'ら', up: 'り', right: 'る', down: 'れ', left: 'ろ' },
-                'わ': { center: 'わ', up: 'を', right: 'ん', down: '', left: '' },
-                '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
-                '小': { center: 'SMALL' },
-                'ー': { center: 'ー' }
-            };
+            try {
+                const saved = localStorage.getItem('flick-key-layout');
+                if (saved === 'legacy' || saved === 'smartphone') layoutSelect.value = saved;
+            } catch (error) { /* Input still works when browser storage is unavailable. */ }
 
-            const katakanaKeyMap = {
-                'ア': { center: 'ア', up: 'イ', right: 'ウ', down: 'エ', left: 'オ' },
-                'カ': { center: 'カ', up: 'キ', right: 'ク', down: 'ケ', left: 'コ' },
-                'サ': { center: 'サ', up: 'シ', right: 'ス', down: 'セ', left: 'ソ' },
-                'タ': { center: 'タ', up: 'チ', right: 'ツ', down: 'テ', left: 'ト' },
-                'ナ': { center: 'ナ', up: 'ニ', right: 'ヌ', down: 'ネ', left: 'ノ' },
-                'ハ': { center: 'ハ', up: 'ヒ', right: 'フ', down: 'ヘ', left: 'ホ' },
-                'マ': { center: 'マ', up: 'ミ', right: 'ム', down: 'メ', left: 'モ' },
-                'ヤ': { center: 'ヤ', up: 'ユ', right: 'ヨ', down: '', left: '' },
-                'ラ': { center: 'ラ', up: 'リ', right: 'ル', down: 'レ', left: 'ロ' },
-                'ワ': { center: 'ワ', up: 'ヲ', right: 'ン', down: '', left: '' },
-                '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
-                '小': { center: 'SMALL' },
-                'ー': { center: 'ー' }
-            };
+            const suggestions = createSuggestionController({
+                fetcher: (url, options) => fetch(url, options),
+                onResult: result => {
+                    suggestionsArea.replaceChildren();
+                    if (!result) return;
+                    const revision = editor.revision;
+                    result.candidates.forEach(value => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'suggestion';
+                        button.textContent = value;
+                        button.addEventListener('click', () => {
+                            if (revision !== editor.revision) return;
+                            if (editor.convertPrefix(result.reading, result.prefix, value)) refresh();
+                        });
+                        suggestionsArea.appendChild(button);
+                    });
+                },
+                onStatus: status => {
+                    const messages = {
+                        idle: '', loading: '変換候補を調べています…', ready: '',
+                        empty: '候補がありません。かなのまま確定できます。',
+                        error: '変換候補を取得できません。'
+                    };
+                    suggestionsStatus.textContent = messages[status];
+                    retryButton.hidden = status !== 'error';
+                    suggestionsArea.setAttribute('aria-busy', String(status === 'loading'));
+                }
+            });
 
-            const smallCharMap = {
-                'あ': 'ぁ', 'い': 'ぃ', 'う': 'ぅ', 'え': 'ぇ', 'お': 'ぉ',
-                'か': 'ゕ', 'け': 'ゖ', 'つ': 'っ',
-                'や': 'ゃ', 'ゆ': 'ゅ', 'よ': 'ょ',
-                'わ': 'ゎ'
-            };
-
-            const katakanaSmallCharMap = {
-                'ア': 'ァ', 'イ': 'ィ', 'ウ': 'ゥ', 'エ': 'ェ', 'オ': 'ォ',
-                'カ': 'ヵ', 'ケ': 'ヶ', 'ツ': 'ッ',
-                'ヤ': 'ャ', 'ユ': 'ュ', 'ヨ': 'ョ',
-                'ワ': 'ヮ'
-            };
-
-            let isKatakana = false;
-            let keyMap = hiraganaKeyMap;
-            let uncommittedText = '';
-            let committedText = '';
-
-            const hiraganaLayout = [
-                ['あ', 'か', 'さ', 'た', 'な'],
-                ['は', 'ま', 'や', 'ら', 'わ'],
-                ['゛゜', 'ー', '小', '', '']
-            ];
-
-            const katakanaLayout = [
-                ['ア', 'カ', 'サ', 'タ', 'ナ'],
-                ['ハ', 'マ', 'ヤ', 'ラ', 'ワ'],
-                ['゛゜', 'ー', '小', '', '']
-            ];
-
-            let keyLayout = hiraganaLayout;
-
-            const dakutenMap = {
-                'か': 'が', 'き': 'ぎ', 'く': 'ぐ', 'け': 'げ', 'こ': 'ご',
-                'さ': 'ざ', 'し': 'じ', 'す': 'ず', 'せ': 'ぜ', 'そ': 'ぞ',
-                'た': 'だ', 'ち': 'ぢ', 'つ': 'づ', 'て': 'で', 'と': 'ど',
-                'は': 'ば', 'ひ': 'び', 'ふ': 'ぶ', 'へ': 'べ', 'ほ': 'ぼ',
-                'カ': 'ガ', 'キ': 'ギ', 'ク': 'グ', 'ケ': 'ゲ', 'コ': 'ゴ',
-                'サ': 'ザ', 'シ': 'ジ', 'ス': 'ズ', 'セ': 'ゼ', 'ソ': 'ゾ',
-                'タ': 'ダ', 'チ': 'ヂ', 'ツ': 'ヅ', 'テ': 'デ', 'ト': 'ド',
-                'ハ': 'バ', 'ヒ': 'ビ', 'フ': 'ブ', 'ヘ': 'ベ', 'ホ': 'ボ',
-                'ウ': 'ヴ'
-            };
-
-            const handakutenMap = {
-                'は': 'ぱ', 'ひ': 'ぴ', 'ふ': 'ぷ', 'へ': 'ぺ', 'ほ': 'ぽ',
-                'ハ': 'パ', 'ヒ': 'ピ', 'フ': 'プ', 'ヘ': 'ペ', 'ホ': 'ポ'
-            };
-
+            function updateSuggestions() {
+                suggestions.update(isKatakana || nativeComposing ? '' : editor.reading);
+            }
+            function render(focus = true) {
+                rendering = true;
+                const scrollTop = outputArea.scrollTop;
+                if (outputArea.value !== editor.text) outputArea.value = editor.text;
+                if (focus) outputArea.focus({ preventScroll: true });
+                outputArea.setSelectionRange(editor.start, editor.end);
+                outputArea.scrollTop = editor.start === editor.text.length && editor.end === editor.text.length
+                    ? outputArea.scrollHeight : scrollTop;
+                compositionStatus.textContent = editor.reading
+                    ? `${isKatakana ? '入力中の文字' : '変換する文字'}：${editor.reading}`
+                    : '入力欄で位置を選べます。';
+                compositionStatus.title = compositionStatus.textContent;
+                rendering = false;
+            }
+            function refresh(focus = true) {
+                render(focus);
+                updateSuggestions();
+            }
+            function rememberSelection() {
+                if (rendering || nativeComposing) return;
+                if (editor.setSelection(outputArea.selectionStart, outputArea.selectionEnd)) {
+                    render(false);
+                    updateSuggestions();
+                }
+            }
+            function insertCharacter(value) {
+                if (value === 'SMALL') editor.modify(withKatakana(smallMap), isKatakana ? 'ッ' : 'っ');
+                else if (value === '゛') editor.modify(withKatakana(dakutenMap));
+                else if (value === '゜') editor.modify(withKatakana(handakutenMap));
+                else editor.insert(value);
+                refresh();
+            }
             function createKeyboard() {
-                keyboard.innerHTML = '';
-                keyLayout.forEach(row => {
+                cancelFlick();
+                const config = getKeyboardConfig(layoutSelect.value, isKatakana);
+                keyMap = config.map;
+                keyboard.dataset.layout = layoutSelect.value;
+                keyboard.replaceChildren();
+                const help = layoutSelect.value === 'smartphone'
+                    ? 'スマホ型：「あ」は左に「い」、上に「う」、右に「え」、下に「お」。'
+                    : '今の配置：「あ」は上に「い」、右に「う」、下に「え」、左に「お」。';
+                document.getElementById('layout-help').textContent = isKatakana
+                    ? help.replace(/「([^」]+)」/g, (_, value) => `「${toKatakana(value)}」`) : help;
+                config.rows.forEach(row => {
                     const rowDiv = document.createElement('div');
                     rowDiv.className = 'keyboard-row';
-                    row.forEach(keyChar => {
-                        const keyDiv = document.createElement('div');
-                        if (keyChar) {
-                            keyDiv.className = 'key';
-                            keyDiv.textContent = keyChar;
-                            keyDiv.dataset.key = keyChar;
-                            createFlickOptions(keyDiv, keyChar);
-                        } else {
-                            keyDiv.style.width = '70px';
-                            keyDiv.style.visibility = 'hidden';
-                        }
+                    row.forEach(key => {
+                        const keyDiv = document.createElement(key ? 'button' : 'span');
+                        keyDiv.className = key ? 'key' : 'key key-placeholder';
+                        if (key) {
+                            keyDiv.type = 'button';
+                            keyDiv.textContent = key;
+                            keyDiv.dataset.key = key;
+                            keyDiv.setAttribute('aria-label', key);
+                            keyDiv.setAttribute('aria-describedby', 'layout-help');
+                            const options = document.createElement('span');
+                            options.className = 'flick-options';
+                            options.setAttribute('aria-hidden', 'true');
+                            Object.entries(keyMap[key]).forEach(([direction, value]) => {
+                                if (!value) return;
+                                const option = document.createElement('span');
+                                option.className = `flick-option flick-${direction}`;
+                                option.textContent = value === 'SMALL' ? '小' : value;
+                                options.appendChild(option);
+                            });
+                            keyDiv.appendChild(options);
+                        } else keyDiv.setAttribute('aria-hidden', 'true');
                         rowDiv.appendChild(keyDiv);
                     });
                     keyboard.appendChild(rowDiv);
                 });
             }
-
-            function toggleKanaMode() {
-                // モード切替前に未確定テキストを確定
-                if (uncommittedText) {
-                    committedText += uncommittedText;
-                    uncommittedText = '';
-                    updateOutputArea();
-                }
-
-                isKatakana = !isKatakana;
-                suggestionsArea.innerHTML = '';
-                if (isKatakana) {
-                    keyMap = katakanaKeyMap;
-                    keyLayout = katakanaLayout;
-                    document.getElementById('btn-toggle-kana').textContent = 'あ';
-                } else {
-                    keyMap = hiraganaKeyMap;
-                    keyLayout = hiraganaLayout;
-                    document.getElementById('btn-toggle-kana').textContent = 'カナ';
-                }
-                createKeyboard();
-            }
-
-            function createFlickOptions(keyDiv, keyChar) {
-                const options = keyMap[keyChar];
-                if (!options) return;
-
-                const container = document.createElement('div');
-                container.className = 'flick-options';
-
-                Object.entries(options).forEach(([dir, char]) => {
-                    if (char) {
-                        const optionDiv = document.createElement('div');
-                        optionDiv.className = `flick-option flick-${dir}`;
-                        // 'SMALL' コマンドの場合は表示文字を調整
-                        if (char === 'SMALL') {
-                            optionDiv.textContent = '小';
-                            optionDiv.style.fontSize = '18px';
-                        } else {
-                            optionDiv.textContent = char;
-                        }
-                        container.appendChild(optionDiv);
-                    }
-                });
-                keyDiv.appendChild(container);
-            }
-
             function getFlickDirection(dx, dy) {
-                if (Math.abs(dx) < flickThreshold && Math.abs(dy) < flickThreshold) return 'center';
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    return dx > 0 ? 'right' : 'left';
-                } else {
-                    return dy > 0 ? 'down' : 'up';
-                }
+                if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return 'center';
+                return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
             }
-
-            function insertText(text) {
-                uncommittedText += text;
-                updateOutputArea();
-                updateSuggestions();
-            }
-
-            function updateOutputArea() {
-                if (uncommittedText) {
-                    outputArea.innerHTML = committedText + '<span class="uncommitted-text">' + uncommittedText + '</span>';
-                } else {
-                    outputArea.innerHTML = committedText;
-                }
-                // カーソルを末尾に移動
-                const range = document.createRange();
-                const sel = window.getSelection();
-                range.selectNodeContents(outputArea);
-                range.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-
-            function handleStart(e) {
-                const target = e.target.closest('.key');
-                if (target && target.dataset.key) {
-                    e.preventDefault();
-                    activeKey = target;
-                    activeKey.classList.add('active');
-
-                    const touch = e.touches ? e.touches[0] : e;
-                    startX = touch.clientX;
-                    startY = touch.clientY;
-
-                    const flickOptions = activeKey.querySelector('.flick-options');
-                    if (flickOptions) {
-                        flickOptions.style.display = 'block';
-                        highlightFlickOption('center');
-                    }
-                }
-            }
-
-            function handleMove(e) {
-                if (!activeKey) return;
-                e.preventDefault();
-
-                const touch = e.touches ? e.touches[0] : e;
-                const dx = touch.clientX - startX;
-                const dy = touch.clientY - startY;
-
-                const newFlickDir = getFlickDirection(dx, dy);
-                if (newFlickDir !== flickDir) {
-                    flickDir = newFlickDir;
-                    highlightFlickOption(flickDir);
-                }
-            }
-
-            function handleEnd(e) {
-                if (!activeKey) return;
-                e.preventDefault();
-
-                const keyChar = activeKey.dataset.key;
-                const options = keyMap[keyChar];
-                const selectedChar = options[flickDir] || options['center'];
-
-                if (selectedChar) {
-                    if (selectedChar === 'SMALL') {
-                        // 小文字変換処理
-                        const fullText = committedText + uncommittedText;
-                        const lastChar = fullText.slice(-1);
-                        const map = isKatakana ? katakanaSmallCharMap : smallCharMap;
-                        const newChar = map[lastChar];
-
-                        if (newChar) {
-                            if (uncommittedText.length > 0) {
-                                uncommittedText = uncommittedText.slice(0, -1) + newChar;
-                            } else if (committedText.length > 0) {
-                                committedText = committedText.slice(0, -1) + newChar;
-                            }
-                            updateOutputArea();
-                        } else {
-                            // 変換できない文字の場合は「っ」または「ッ」を入力（または何もしない）
-                            // ここでは利便性のため「っ/ッ」を入力するようにします
-                            insertText(isKatakana ? 'ッ' : 'っ');
-                        }
-                    } else if (selectedChar === '゛' || selectedChar === '゜') {
-                        const fullText = committedText + uncommittedText;
-                        const lastChar = fullText.slice(-1);
-                        const map = (selectedChar === '゛') ? dakutenMap : handakutenMap;
-                        const newChar = map[lastChar];
-                        if (newChar) {
-                            if (uncommittedText.length > 0) {
-                                uncommittedText = uncommittedText.slice(0, -1) + newChar;
-                            } else {
-                                committedText = committedText.slice(0, -1) + newChar;
-                            }
-                            updateOutputArea();
-                        }
-                    } else {
-                        insertText(selectedChar);
-                    }
-                }
-
-                const flickOptions = activeKey.querySelector('.flick-options');
-                if (flickOptions) {
-                    flickOptions.style.display = 'none';
-                }
-
-                activeKey.classList.remove('active');
-                highlightFlickOption(null);
-                activeKey = null;
-                flickDir = 'center';
-            }
-
-            function highlightFlickOption(dir) {
-                if (!activeKey) return;
-                const options = activeKey.querySelectorAll('.flick-option');
-                options.forEach(opt => {
-                    opt.classList.remove('highlight');
-                    if (dir && opt.classList.contains(`flick-${dir}`)) {
-                        opt.classList.add('highlight');
-                    }
+            function highlight() {
+                activeKey?.querySelectorAll('.flick-option').forEach(option => {
+                    option.classList.toggle('highlight', option.classList.contains(`flick-${flickDir}`));
                 });
             }
-
-            // Event Listeners
-            keyboard.addEventListener('mousedown', handleStart);
-            document.addEventListener('mousemove', handleMove);
-            document.addEventListener('mouseup', handleEnd);
-            keyboard.addEventListener('touchstart', handleStart, { passive: false });
-            document.addEventListener('touchmove', handleMove, { passive: false });
-            document.addEventListener('touchend', handleEnd, { passive: false });
-
-            // Button Actions
-            document.getElementById('btn-space').addEventListener('click', () => {
-                // スペースを押すと未確定テキストを確定
-                if (uncommittedText) {
-                    committedText += uncommittedText;
-                    uncommittedText = '';
-                    suggestionsArea.innerHTML = '';
-                }
-                committedText += '　';
-                updateOutputArea();
-            });
-            document.getElementById('btn-delete').addEventListener('click', () => {
-                if (uncommittedText.length > 0) {
-                    uncommittedText = uncommittedText.slice(0, -1);
-                } else if (committedText.length > 0) {
-                    committedText = committedText.slice(0, -1);
-                }
-                updateOutputArea();
-                if (!isKatakana && uncommittedText.length > 0) {
-                    fetchKanjiSuggestions(uncommittedText);
-                } else {
-                    suggestionsArea.innerHTML = '';
-                }
-            });
-            document.getElementById('btn-clear').addEventListener('click', () => {
-                committedText = '';
-                uncommittedText = '';
-                outputArea.innerHTML = '';
-                suggestionsArea.innerHTML = '';
-            });
-            document.getElementById('btn-toggle-kana').addEventListener('click', toggleKanaMode);
-
-            document.getElementById('btn-confirm').addEventListener('click', () => {
-                // 未確定テキストを確定
-                if (uncommittedText) {
-                    committedText += uncommittedText;
-                    uncommittedText = '';
-                    suggestionsArea.innerHTML = '';
-                    updateOutputArea();
-                }
-            });
-
-            document.getElementById('btn-comma').addEventListener('click', () => {
-                // 未確定テキストがあれば確定してから句読点を追加
-                if (uncommittedText) {
-                    committedText += uncommittedText;
-                    uncommittedText = '';
-                    suggestionsArea.innerHTML = '';
-                }
-                committedText += '、';
-                updateOutputArea();
-            });
-
-            document.getElementById('btn-period').addEventListener('click', () => {
-                // 未確定テキストがあれば確定してから句点を追加
-                if (uncommittedText) {
-                    committedText += uncommittedText;
-                    uncommittedText = '';
-                    suggestionsArea.innerHTML = '';
-                }
-                committedText += '。';
-                updateOutputArea();
-            });
-
-            document.getElementById('btn-search').addEventListener('click', () => {
-                const text = committedText + uncommittedText;
-                if (!text.trim()) {
-                    showNotification('検索するテキストがありません', 'error');
-                    return;
-                }
-                const url = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
-                window.open(url, '_blank');
-            });
-
-            document.getElementById('btn-copy').addEventListener('click', () => {
-                const text = committedText + uncommittedText;
-                if (!text) {
-                    showNotification('コピーするテキストがありません', 'error');
-                    return;
-                }
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        showNotification('クリップボードにコピーしました', 'success');
-                    }).catch(() => {
-                        fallbackCopy(text);
-                    });
-                } else {
-                    fallbackCopy(text);
-                }
-            });
-
-            function fallbackCopy(text) {
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    const successful = document.execCommand('copy');
-                    if (successful) {
-                        showNotification('クリップボードにコピーしました', 'success');
-                    } else {
-                        showNotification('コピーに失敗しました', 'error');
-                    }
-                } catch (err) {
-                    showNotification('コピーに失敗しました', 'error');
-                }
-                document.body.removeChild(textArea);
+            function cancelFlick() {
+                if (!activeKey) return;
+                const key = activeKey;
+                const pointer = activePointer;
+                activeKey = null;
+                activePointer = null;
+                flickDir = 'center';
+                key.classList.remove('active');
+                key.querySelector('.flick-options').style.display = 'none';
+                key.querySelectorAll('.highlight').forEach(option => option.classList.remove('highlight'));
+                if (key.hasPointerCapture(pointer)) key.releasePointerCapture(pointer);
             }
-
-            document.getElementById('btn-save').addEventListener('click', () => {
-                const text = committedText + uncommittedText;
-                if (!text) {
-                    showNotification('保存するテキストがありません', 'error');
-                    return;
+            keyboard.addEventListener('pointerdown', event => {
+                const key = event.target.closest('.key[data-key]');
+                if (!key || activeKey || nativeComposing || (event.pointerType === 'mouse' && event.button !== 0)) return;
+                event.preventDefault();
+                rememberSelection();
+                activeKey = key;
+                activePointer = event.pointerId;
+                startX = event.clientX;
+                startY = event.clientY;
+                flickDir = 'center';
+                key.setPointerCapture(event.pointerId);
+                key.classList.add('active');
+                key.querySelector('.flick-options').style.display = 'block';
+                highlight();
+            });
+            keyboard.addEventListener('pointermove', event => {
+                if (!activeKey || activePointer !== event.pointerId) return;
+                event.preventDefault();
+                flickDir = getFlickDirection(event.clientX - startX, event.clientY - startY);
+                highlight();
+            });
+            keyboard.addEventListener('pointerup', event => {
+                if (!activeKey || activePointer !== event.pointerId) return;
+                event.preventDefault();
+                flickDir = getFlickDirection(event.clientX - startX, event.clientY - startY);
+                const options = keyMap[activeKey.dataset.key];
+                const value = options[flickDir] || options.center;
+                cancelFlick();
+                if (value) insertCharacter(value);
+            });
+            keyboard.addEventListener('pointercancel', event => {
+                if (activePointer === event.pointerId) cancelFlick();
+            });
+            keyboard.addEventListener('lostpointercapture', event => {
+                if (activePointer === event.pointerId) cancelFlick();
+            });
+            window.addEventListener('blur', cancelFlick);
+            keyboard.addEventListener('click', event => {
+                // Native keyboard/assistive clicks have no pointerdown; pointer clicks were handled above.
+                const key = event.target.closest('.key[data-key]');
+                if (key && event.detail === 0 && !nativeComposing) {
+                    rememberSelection();
+                    insertCharacter(keyMap[key.dataset.key].center);
                 }
-                const now = new Date();
-                const formattedDate = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
-                const filename = `フリック入力_${formattedDate}.txt`;
+            });
+            document.addEventListener('pointerdown', event => {
+                if (event.target.closest('.btn, .cursor-btn, .suggestion, #btn-retry')) {
+                    rememberSelection();
+                    if (event.pointerType === 'mouse') event.preventDefault();
+                }
+            });
+            ['select', 'click', 'keyup'].forEach(type => outputArea.addEventListener(type, rememberSelection));
+            document.addEventListener('selectionchange', () => {
+                if (document.activeElement === outputArea) rememberSelection();
+            });
+            outputArea.addEventListener('compositionstart', () => {
+                nativeComposing = true;
+                cancelFlick();
+                suggestions.update('');
+            });
+            outputArea.addEventListener('input', () => {
+                editor.setText(outputArea.value, outputArea.selectionStart, outputArea.selectionEnd);
+                if (!nativeComposing) refresh(false);
+            });
+            outputArea.addEventListener('compositionend', () => {
+                nativeComposing = false;
+                editor.setText(outputArea.value, outputArea.selectionStart, outputArea.selectionEnd);
+                refresh(false);
+            });
+            // Only plain text enters the editor; pasted markup is never interpreted as HTML.
+            outputArea.addEventListener('paste', event => {
+                if (nativeComposing || !event.clipboardData) return;
+                event.preventDefault();
+                rememberSelection();
+                editor.insert(event.clipboardData.getData('text/plain'), false);
+                refresh();
+            });
 
-                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+            function action(id, callback) {
+                const button = document.getElementById(id);
+                button.addEventListener('click', () => {
+                    if (nativeComposing) return;
+                    rememberSelection();
+                    callback();
+                    if (button.closest('.menu-panel')) document.getElementById('app-menu').open = false;
+                });
+            }
+            document.addEventListener('pointerdown', event => {
+                const menu = document.getElementById('app-menu');
+                if (menu.open && !menu.contains(event.target)) menu.open = false;
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape') document.getElementById('app-menu').open = false;
+            });
+            action('btn-cursor-left', () => { editor.moveCursor(-1); refresh(); });
+            action('btn-cursor-right', () => { editor.moveCursor(1); refresh(); });
+            action('btn-space', () => { editor.insert('　', false); refresh(); });
+            action('btn-delete', () => { editor.deleteBackward(); refresh(); });
+            action('btn-clear', () => { editor.setText('', 0); refresh(); });
+            action('btn-confirm', () => { editor.commit(); refresh(); });
+            action('btn-comma', () => { editor.insert('、', false); refresh(); });
+            action('btn-period', () => { editor.insert('。', false); refresh(); });
+            action('btn-long-vowel', () => insertCharacter('ー'));
+            action('btn-toggle-kana', () => {
+                editor.commit();
+                isKatakana = !isKatakana;
+                document.getElementById('btn-toggle-kana').textContent = isKatakana ? 'あ' : 'カナ';
+                createKeyboard();
+                refresh();
+            });
+            action('btn-retry', updateSuggestions);
+            layoutSelect.addEventListener('change', () => {
+                try { localStorage.setItem('flick-key-layout', layoutSelect.value); } catch (error) { /* optional */ }
+                createKeyboard();
+            });
+            action('btn-search', () => {
+                if (!editor.text.trim()) return showNotification('検索するテキストがありません', 'error');
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(editor.text)}`, '_blank', 'noopener');
+            });
+            action('btn-copy', async () => {
+                if (!editor.text) return showNotification('コピーするテキストがありません', 'error');
+                const text = editor.text;
+                try {
+                    if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+                    await navigator.clipboard.writeText(text);
+                    showNotification('クリップボードにコピーしました', 'success');
+                } catch (error) {
+                    const temporary = document.createElement('textarea');
+                    temporary.value = text;
+                    document.body.appendChild(temporary);
+                    temporary.select();
+                    try {
+                        const copied = document.execCommand('copy');
+                        showNotification(copied ? 'クリップボードにコピーしました' : 'コピーに失敗しました', copied ? 'success' : 'error');
+                    } catch (copyError) { showNotification('コピーに失敗しました', 'error'); }
+                    finally { temporary.remove(); render(); }
+                }
+            });
+            action('btn-save', () => {
+                if (!editor.text) return showNotification('保存するテキストがありません', 'error');
+                const now = new Date();
+                const pad = value => String(value).padStart(2, '0');
+                const filename = `フリック入力_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.txt`;
+                const url = URL.createObjectURL(new Blob([editor.text], { type: 'text/plain;charset=utf-8' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
                 showNotification('ファイルとして保存しました', 'success');
             });
-
             function showNotification(message, type) {
+                clearTimeout(notificationTimer);
                 notification.textContent = message;
                 notification.className = `show ${type}`;
-                setTimeout(() => {
-                    notification.className = '';
-                }, 3000);
+                notificationTimer = setTimeout(() => { notification.className = ''; }, 3000);
             }
-
-            // 未確定テキストの変更を監視（キーボード入力時）
-            outputArea.addEventListener('input', (e) => {
-                // ユーザーが直接編集した場合の処理
-                const fullText = outputArea.innerText;
-                const expectedText = committedText + uncommittedText;
-
-                if (fullText !== expectedText) {
-                    // 直接編集された場合は全て確定テキストとして扱う
-                    committedText = fullText;
-                    uncommittedText = '';
-                    suggestionsArea.innerHTML = '';
-                }
-            });
-
-            // 未確定テキストが変更されたときに変換候補を取得
-            function updateSuggestions() {
-                if (isKatakana || !uncommittedText) {
-                    suggestionsArea.innerHTML = '';
-                    return;
-                }
-                fetchKanjiSuggestions(uncommittedText);
-            }
-
-            async function fetchKanjiSuggestions(text) {
-                const url = `https://www.google.com/transliterate?langpair=ja-Hira|ja&text=${encodeURIComponent(text)}`;
-                try {
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    displaySuggestions(data);
-                } catch (error) {
-                    console.error('Error fetching kanji suggestions:', error);
-                }
-            }
-
-            function displaySuggestions(data) {
-                suggestionsArea.innerHTML = '';
-                if (data && data.length > 0) {
-                    const uniqueSuggestions = [...new Set(data[0][1])];
-                    uniqueSuggestions.forEach(suggestion => {
-                        const suggestionDiv = document.createElement('div');
-                        suggestionDiv.className = 'suggestion';
-                        suggestionDiv.textContent = suggestion;
-                        suggestionDiv.addEventListener('click', () => {
-                            // 未確定テキストを変換候補で置き換えて確定
-                            committedText += suggestion;
-                            uncommittedText = '';
-                            updateOutputArea();
-                            suggestionsArea.innerHTML = '';
-                        });
-                        suggestionsArea.appendChild(suggestionDiv);
-                    });
-                }
-            }
-
             createKeyboard();
+            refresh(false);
         });
     </script>
 </body>
