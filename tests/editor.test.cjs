@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const { FlickEditor, createSuggestionController, getKeyboardConfig, parseSuggestions,
-    withKatakana, smallMap, dakutenMap, handakutenMap } = vm.runInNewContext(
-    script + '\n({ FlickEditor, createSuggestionController, getKeyboardConfig, parseSuggestions, withKatakana, smallMap, dakutenMap, handakutenMap })',
+    withKatakana, smallMap, dakutenMap, handakutenMap, dakutenToggleMap, handakutenToggleMap, markCycleMap } = vm.runInNewContext(
+    script + '\n({ FlickEditor, createSuggestionController, getKeyboardConfig, parseSuggestions, withKatakana, smallMap, dakutenMap, handakutenMap, dakutenToggleMap, handakutenToggleMap, markCycleMap })',
     { Intl, AbortController, setTimeout, clearTimeout, document: { addEventListener() {} } }
 );
 function editorAt(text, position = text.length, end = position) {
@@ -179,6 +179,79 @@ test('smartphone layout uses three columns and standard directions in both kana 
     assert.equal(['center', 'left', 'up', 'right', 'down'].map(dir => kata.map['ア'][dir]).join(''), 'アイウエオ');
     assert.equal(kata.map['小'].center, 'SMALL');
     assert.equal(kata.map['゛゜'].right, '゜');
+});
+
+test('tapping the mark key cycles か→が→か and は→ば→ぱ→は in both kana modes', () => {
+    const editor = editorAt('か');
+    editor.modify(markCycleMap);
+    assert.equal(editor.text, 'が');
+    editor.modify(markCycleMap);
+    assert.equal(editor.text, 'か');
+    editor.setText('は', 1);
+    const seen = [];
+    for (let i = 0; i < 3; i++) { editor.modify(markCycleMap); seen.push(editor.text); }
+    assert.deepEqual(seen, ['ば', 'ぱ', 'は']);
+    editor.setText('ホ', 1);
+    editor.modify(withKatakana(markCycleMap));
+    editor.modify(withKatakana(markCycleMap));
+    assert.equal(editor.text, 'ポ');
+    editor.setText('あ', 1);
+    editor.modify(markCycleMap);
+    assert.equal(editor.text, 'あ');
+});
+test('flicking ゛ or ゜ again removes the mark and switches directly between ば and ぱ', () => {
+    const editor = editorAt('が');
+    editor.modify(dakutenToggleMap);
+    assert.equal(editor.text, 'か');
+    editor.setText('ば', 1);
+    editor.modify(handakutenToggleMap);
+    assert.equal(editor.text, 'ぱ');
+    editor.modify(handakutenToggleMap);
+    assert.equal(editor.text, 'は');
+    editor.setText('ぴ', 1);
+    editor.modify(dakutenToggleMap);
+    assert.equal(editor.text, 'び');
+    assert.equal(getKeyboardConfig('legacy').map['゛゜'].center, 'CYCLE');
+    assert.equal(getKeyboardConfig('smartphone', true).map['゛゜'].center, 'CYCLE');
+});
+test('undo restores each text change, including a cleared text and an unconverted reading', () => {
+    const editor = editorAt('前');
+    editor.record(() => editor.insert('が'));
+    editor.record(() => editor.insert('っ'));
+    editor.record(() => editor.insert('こう'));
+    assert.equal(editor.reading, 'がっこう');
+    editor.record(() => editor.convertPrefix('がっこう', 'がっこう', '学校'));
+    assert.equal(editor.text, '前学校');
+    assert.equal(editor.undo(), true);
+    assert.equal(editor.text, '前がっこう');
+    assert.equal(editor.reading, 'がっこう');
+    assert.equal(editor.start, 5);
+    editor.record(() => editor.setText('', 0));
+    assert.equal(editor.text, '');
+    editor.undo();
+    assert.equal(editor.text, '前がっこう');
+    editor.undo();
+    assert.equal(editor.text, '前がっ');
+    editor.undo();
+    editor.undo();
+    assert.equal(editor.text, '前');
+    assert.equal(editor.undo(), false);
+});
+test('undo skips steps that do not change the text and keeps a bounded history', () => {
+    const editor = editorAt('あ');
+    editor.record(() => editor.commit());
+    editor.record(() => editor.modify(dakutenMap));
+    assert.equal(editor.undoStack.length, 0);
+    for (let i = 0; i < 250; i++) editor.record(() => editor.insert('い'));
+    assert.equal(editor.undoStack.length, 200);
+});
+test('newline inserts at the caret and commits the reading as kana', () => {
+    const editor = editorAt('前後', 1);
+    editor.insert('か');
+    editor.insert('\n', false);
+    assert.equal(editor.text, '前か\n後');
+    assert.equal(editor.reading, '');
+    assert.equal(editor.start, 3);
 });
 
 function controlledRequests() {

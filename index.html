@@ -117,12 +117,12 @@
         }
         .editor-tools {
             display: grid;
-            grid-template-columns: 44px 44px minmax(0, 1fr);
+            grid-template-columns: 44px 44px auto minmax(0, 1fr);
             align-items: center;
             gap: 6px;
             min-height: 44px;
         }
-        .cursor-btn, #btn-retry, #layout-select {
+        .cursor-btn, #btn-undo, #btn-retry, #layout-select {
             min-height: 44px;
             border: 1px solid var(--key-border);
             border-radius: 8px;
@@ -131,6 +131,8 @@
             font-size: 15px;
         }
         .cursor-btn { padding: 0; font-size: 20px; }
+        #btn-undo { padding: 6px 10px; font-weight: bold; white-space: nowrap; }
+        #btn-undo:disabled { opacity: .45; cursor: default; }
         #composition-status { margin: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .conversion-bar {
             display: flex;
@@ -203,6 +205,7 @@
         #btn-toggle-kana { background: #a64c00; }
         #btn-confirm { background: #2860b9; }
         #btn-comma, #btn-period, #btn-long-vowel { background: #217268; }
+        #btn-newline { background: #4a5a8a; }
         #btn-search { background: var(--btn-search); }
         #btn-copy { background: var(--btn-copy); }
         #btn-save { background: var(--btn-save); }
@@ -286,6 +289,20 @@
         #notification.show { opacity: 1; transform: translate(-50%, 0); }
         #notification.success { background: var(--notification-success-bg); }
         #notification.error { background: var(--notification-error-bg); }
+        #clear-dialog {
+            width: min(360px, calc(100vw - 32px));
+            padding: 20px;
+            border: 0;
+            border-radius: 12px;
+            color: var(--text-dark);
+            box-shadow: 0 6px 30px rgba(0,0,0,.3);
+        }
+        #clear-dialog::backdrop { background: rgba(0,0,0,.45); }
+        #clear-dialog p { margin: 0 0 8px; font-size: 16px; line-height: 1.6; }
+        #clear-dialog #clear-title { font-size: 20px; font-weight: bold; }
+        .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+        #btn-clear-cancel { background: #5c6670; }
+        #btn-clear-ok { background: var(--btn-clear); }
         @media (min-width: 760px) and (min-aspect-ratio: 1/1) {
             .workspace { grid-template-columns: minmax(260px,.8fr) minmax(440px,1.2fr); grid-template-rows: minmax(0,1fr); }
             .keyboard-panel { container-type: inline-size; grid-template-columns: minmax(0,1fr) 128px; grid-template-rows: 44px minmax(0,1fr); }
@@ -294,7 +311,7 @@
             #keyboard[data-layout="smartphone"] { --key-size: min(92px, calc((100vw - 460px) / 3), calc((100dvh - 240px) / 4)); }
             .typing-actions { grid-template-columns: repeat(2,minmax(0,1fr)); align-content: center; }
             .typing-actions .btn { padding: 8px 2px; font-size: 14px; }
-            #btn-long-vowel { grid-column: 1 / -1; }
+            #btn-long-vowel, #btn-newline { grid-column: 1 / -1; }
             #output-area { font-size: 28px; }
             @supports (width: 1cqw) {
                 #keyboard { --key-size: min(76px, calc((100cqw - 192px) / 5), calc((100dvh - 216px) / 3)); }
@@ -305,6 +322,7 @@
             #output-area { font-size: 20px; }
             .btn { font-size: 14px; }
             #composition-status { font-size: 12px; }
+            .newline-icon { display: none; }
         }
         /* Very short portrait windows retain scroll rather than hiding writing controls. */
         @media (max-height: 639px) and (orientation: portrait) {
@@ -330,6 +348,8 @@
                     <p id="layout-help"></p>
                     <p>キーを押したまま上下左右に指を動かし、指を離すと入力できます。</p>
                     <p>文章が長くなったときは、白い入力欄の中をスクロールして読み返せます。</p>
+                    <p>「゛゜」をタップするたびに、か→が→か、は→ば→ぱ→は と変わります。</p>
+                    <p>書いた文章は、このタブレットの中に自動でほぞんされます。まちがえたときは「もどす」で1つ前にもどせます。</p>
                 </div>
             </details>
         </header>
@@ -341,6 +361,7 @@
                 <div class="editor-tools">
                     <button type="button" class="cursor-btn" id="btn-cursor-left" aria-label="カーソルを1文字左へ">◀</button>
                     <button type="button" class="cursor-btn" id="btn-cursor-right" aria-label="カーソルを1文字右へ">▶</button>
+                    <button type="button" id="btn-undo" aria-label="1つ前にもどす" disabled>↶ もどす</button>
                     <p id="composition-status" role="status">入力欄で位置を選べます。</p>
                 </div>
                 <div class="conversion-bar">
@@ -366,12 +387,24 @@
                     <button type="button" class="btn" id="btn-space">スペース</button>
                     <button type="button" class="btn" id="btn-confirm">かくてい</button>
                     <button type="button" class="btn" id="btn-long-vowel">ー</button>
+                    <button type="button" class="btn" id="btn-newline"><span class="newline-icon" aria-hidden="true">↵ </span>かいぎょう</button>
                 </div>
             </section>
         </main>
     </div>
 
     <div id="notification"></div>
+
+    <dialog id="clear-dialog" aria-labelledby="clear-title">
+        <form method="dialog">
+            <p id="clear-title">書いた文章をぜんぶ消しますか？</p>
+            <p>消したあとでも「もどす」で元にもどせます。</p>
+            <div class="dialog-actions">
+                <button type="submit" class="btn" id="btn-clear-cancel" value="cancel">やめる</button>
+                <button type="submit" class="btn" id="btn-clear-ok" value="clear">消す</button>
+            </div>
+        </form>
+    </dialog>
 
     <script>
         // UTF-16 offsets match textarea selectionStart/End; grapheme boundaries keep emoji intact.
@@ -408,6 +441,32 @@
                 this.end = 0;
                 this.composition = null;
                 this.revision = 0;
+                this.undoStack = [];
+            }
+            snapshot() {
+                return { text: this.text, start: this.start, end: this.end,
+                    composition: this.composition && { ...this.composition } };
+            }
+            // Records the state before a text change so "もどす" can restore it, including an unconverted reading.
+            pushUndo(state) {
+                if (!state || state.text === this.text) return;
+                this.undoStack.push(state);
+                if (this.undoStack.length > 200) this.undoStack.shift();
+            }
+            record(change) {
+                const before = this.snapshot();
+                change();
+                this.pushUndo(before);
+            }
+            undo() {
+                const state = this.undoStack.pop();
+                if (!state) return false;
+                this.text = state.text;
+                this.start = state.start;
+                this.end = state.end;
+                this.composition = state.composition && { ...state.composition };
+                this.revision++;
+                return true;
             }
             get reading() {
                 return this.composition ? this.text.slice(this.composition.start, this.composition.end) : '';
@@ -567,7 +626,7 @@
             'や': { center: 'や', up: 'ゆ', right: 'よ', down: '', left: '' },
             'ら': { center: 'ら', up: 'り', right: 'る', down: 'れ', left: 'ろ' },
             'わ': { center: 'わ', up: 'を', right: 'ん', down: '', left: '' },
-            '゛゜': { center: '゛', up: '゛', right: '゜', down: '゜', left: 'ー' },
+            '゛゜': { center: 'CYCLE', up: '゛', right: '゜', down: '゜', left: 'ー' },
             '小': { center: 'SMALL' },
             'ー': { center: 'ー' }
         };
@@ -609,6 +668,18 @@
         function withKatakana(map) {
             return { ...map, ...Object.fromEntries(Object.entries(map).map(([from, to]) => [toKatakana(from), toKatakana(to)])) };
         }
+        function reversed(map) {
+            return Object.fromEntries(Object.entries(map).map(([from, to]) => [to, from]));
+        }
+        // Pressing ゛ or ゜ again removes the mark; ば and ぱ switch directly between each other.
+        const dakutenToggleMap = { ...dakutenMap, ...reversed(dakutenMap),
+            ...Object.fromEntries(Object.entries(handakutenMap).map(([from, to]) => [to, dakutenMap[from]])) };
+        const handakutenToggleMap = { ...handakutenMap, ...reversed(handakutenMap),
+            ...Object.fromEntries(Object.entries(handakutenMap).map(([from, to]) => [dakutenMap[from], to])) };
+        // Tapping the ゛゜ key cycles like a phone keyboard: か→が→か, は→ば→ぱ→は.
+        const markCycleMap = { ...dakutenMap, ...reversed(dakutenMap),
+            ...Object.fromEntries(Object.entries(handakutenMap).map(([from, to]) => [dakutenMap[from], to])),
+            ...reversed(handakutenMap) };
 
         document.addEventListener('DOMContentLoaded', () => {
             const outputArea = document.getElementById('output-area');
@@ -619,7 +690,14 @@
             const suggestionsStatus = document.getElementById('suggestions-status');
             const retryButton = document.getElementById('btn-retry');
             const layoutSelect = document.getElementById('layout-select');
+            const undoButton = document.getElementById('btn-undo');
+            const clearDialog = document.getElementById('clear-dialog');
             const editor = new FlickEditor();
+            const DRAFT_KEY = 'flick-draft-text';
+            const modifierMaps = {
+                SMALL: withKatakana(smallMap), CYCLE: withKatakana(markCycleMap),
+                '゛': withKatakana(dakutenToggleMap), '゜': withKatakana(handakutenToggleMap)
+            };
             let isKatakana = false;
             let rendering = false;
             let nativeComposing = false;
@@ -630,11 +708,26 @@
             let flickDir = 'center';
             let keyMap;
             let notificationTimer;
+            let savedDraft = '';
+            let compositionBefore = null;
 
             try {
                 const saved = localStorage.getItem('flick-key-layout');
                 if (saved === 'legacy' || saved === 'smartphone') layoutSelect.value = saved;
             } catch (error) { /* Input still works when browser storage is unavailable. */ }
+            // The draft survives reloads and closed tabs, but stays in this browser only.
+            try {
+                savedDraft = localStorage.getItem(DRAFT_KEY) || '';
+                if (savedDraft) editor.setText(savedDraft, savedDraft.length);
+            } catch (error) { /* Writing still works without a saved draft. */ }
+            function saveDraft() {
+                if (savedDraft === editor.text) return;
+                try {
+                    if (editor.text) localStorage.setItem(DRAFT_KEY, editor.text);
+                    else localStorage.removeItem(DRAFT_KEY);
+                    savedDraft = editor.text;
+                } catch (error) { /* optional */ }
+            }
 
             const suggestions = createSuggestionController({
                 fetcher: (url, options) => fetch(url, options),
@@ -649,7 +742,9 @@
                         button.textContent = value;
                         button.addEventListener('click', () => {
                             if (revision !== editor.revision) return;
-                            if (editor.convertPrefix(result.reading, result.prefix, value)) refresh();
+                            let converted = false;
+                            editor.record(() => { converted = editor.convertPrefix(result.reading, result.prefix, value); });
+                            if (converted) refresh();
                         });
                         suggestionsArea.appendChild(button);
                     });
@@ -681,6 +776,8 @@
                     ? `${isKatakana ? '入力中の文字' : '変換する文字'}：${editor.reading}`
                     : '入力欄で位置を選べます。';
                 compositionStatus.title = compositionStatus.textContent;
+                undoButton.disabled = !editor.undoStack.length;
+                saveDraft();
                 rendering = false;
             }
             function refresh(focus = true) {
@@ -694,12 +791,16 @@
                     updateSuggestions();
                 }
             }
-            function insertCharacter(value) {
-                if (value === 'SMALL') editor.modify(withKatakana(smallMap), isKatakana ? 'ッ' : 'っ');
-                else if (value === '゛') editor.modify(withKatakana(dakutenMap));
-                else if (value === '゜') editor.modify(withKatakana(handakutenMap));
-                else editor.insert(value);
+            function change(callback) {
+                editor.record(callback);
                 refresh();
+            }
+            function insertCharacter(value) {
+                change(() => {
+                    if (value === 'SMALL') editor.modify(modifierMaps.SMALL, isKatakana ? 'ッ' : 'っ');
+                    else if (Object.hasOwn(modifierMaps, value)) editor.modify(modifierMaps[value]);
+                    else editor.insert(value);
+                });
             }
             function createKeyboard() {
                 cancelFlick();
@@ -731,7 +832,7 @@
                                 if (!value) return;
                                 const option = document.createElement('span');
                                 option.className = `flick-option flick-${direction}`;
-                                option.textContent = value === 'SMALL' ? '小' : value;
+                                option.textContent = { SMALL: '小', CYCLE: '゛゜' }[value] || value;
                                 options.appendChild(option);
                             });
                             keyDiv.appendChild(options);
@@ -808,7 +909,7 @@
                 }
             });
             document.addEventListener('pointerdown', event => {
-                if (event.target.closest('.btn, .cursor-btn, .suggestion, #btn-retry')) {
+                if (event.target.closest('.btn, .cursor-btn, .suggestion, #btn-undo, #btn-retry')) {
                     rememberSelection();
                     if (event.pointerType === 'mouse') event.preventDefault();
                 }
@@ -819,16 +920,21 @@
             });
             outputArea.addEventListener('compositionstart', () => {
                 nativeComposing = true;
+                compositionBefore = editor.snapshot();
                 cancelFlick();
                 suggestions.update('');
             });
             outputArea.addEventListener('input', () => {
-                editor.setText(outputArea.value, outputArea.selectionStart, outputArea.selectionEnd);
-                if (!nativeComposing) refresh(false);
+                const update = () => editor.setText(outputArea.value, outputArea.selectionStart, outputArea.selectionEnd);
+                if (nativeComposing) return update();
+                editor.record(update);
+                refresh(false);
             });
             outputArea.addEventListener('compositionend', () => {
                 nativeComposing = false;
                 editor.setText(outputArea.value, outputArea.selectionStart, outputArea.selectionEnd);
+                editor.pushUndo(compositionBefore);
+                compositionBefore = null;
                 refresh(false);
             });
             // Only plain text enters the editor; pasted markup is never interpreted as HTML.
@@ -836,8 +942,7 @@
                 if (nativeComposing || !event.clipboardData) return;
                 event.preventDefault();
                 rememberSelection();
-                editor.insert(event.clipboardData.getData('text/plain'), false);
-                refresh();
+                change(() => editor.insert(event.clipboardData.getData('text/plain'), false));
             });
 
             function action(id, callback) {
@@ -858,12 +963,30 @@
             });
             action('btn-cursor-left', () => { editor.moveCursor(-1); refresh(); });
             action('btn-cursor-right', () => { editor.moveCursor(1); refresh(); });
-            action('btn-space', () => { editor.insert('　', false); refresh(); });
-            action('btn-delete', () => { editor.deleteBackward(); refresh(); });
-            action('btn-clear', () => { editor.setText('', 0); refresh(); });
+            action('btn-space', () => change(() => editor.insert('　', false)));
+            action('btn-delete', () => change(() => editor.deleteBackward()));
+            action('btn-clear', () => {
+                if (!editor.text) return showNotification('消す文章がありません', 'error');
+                if (typeof clearDialog.showModal !== 'function') {
+                    if (window.confirm('書いた文章をぜんぶ消しますか？')) change(() => editor.setText('', 0));
+                    return;
+                }
+                clearDialog.returnValue = '';
+                clearDialog.showModal();
+            });
+            clearDialog.addEventListener('close', () => {
+                if (clearDialog.returnValue === 'clear') {
+                    change(() => editor.setText('', 0));
+                    showNotification('消しました。「もどす」で元にもどせます', 'success');
+                } else render();
+            });
+            action('btn-undo', () => {
+                if (editor.undo()) refresh();
+            });
             action('btn-confirm', () => { editor.commit(); refresh(); });
-            action('btn-comma', () => { editor.insert('、', false); refresh(); });
-            action('btn-period', () => { editor.insert('。', false); refresh(); });
+            action('btn-comma', () => change(() => editor.insert('、', false)));
+            action('btn-period', () => change(() => editor.insert('。', false)));
+            action('btn-newline', () => change(() => editor.insert('\n', false)));
             action('btn-long-vowel', () => insertCharacter('ー'));
             action('btn-toggle-kana', () => {
                 editor.commit();
