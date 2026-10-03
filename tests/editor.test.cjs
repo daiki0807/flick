@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const { FlickEditor, createSuggestionController, getKeyboardConfig, parseSuggestions,
-    withKatakana, smallMap, dakutenMap, handakutenMap, dakutenToggleMap, handakutenToggleMap, markCycleMap } = vm.runInNewContext(
-    script + '\n({ FlickEditor, createSuggestionController, getKeyboardConfig, parseSuggestions, withKatakana, smallMap, dakutenMap, handakutenMap, dakutenToggleMap, handakutenToggleMap, markCycleMap })',
+    withKatakana, smallMap, dakutenMap, handakutenMap, dakutenToggleMap, handakutenToggleMap, markCycleMap, countCharacters } = vm.runInNewContext(
+    script + '\n({ FlickEditor, createSuggestionController, getKeyboardConfig, parseSuggestions, withKatakana, smallMap, dakutenMap, handakutenMap, dakutenToggleMap, handakutenToggleMap, markCycleMap, countCharacters })',
     { Intl, AbortController, setTimeout, clearTimeout, document: { addEventListener() {} } }
 );
 function editorAt(text, position = text.length, end = position) {
@@ -252,6 +252,13 @@ test('newline inserts at the caret and commits the reading as kana', () => {
     assert.equal(editor.text, '前か\n後');
     assert.equal(editor.reading, '');
     assert.equal(editor.start, 3);
+});
+
+test('character count ignores line breaks and counts emoji and marks as one character', () => {
+    assert.equal(countCharacters(''), 0);
+    assert.equal(countCharacters('がっこう、\nいく。'), 8);
+    assert.equal(countCharacters('あ\r\nい　う'), 4);
+    assert.equal(countCharacters('😀👨‍👩‍👧‍👦か\u3099'), 3);
 });
 
 function controlledRequests() {
