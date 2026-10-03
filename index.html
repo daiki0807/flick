@@ -57,6 +57,9 @@
         }
         header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         header h1 { margin: 0; font-size: clamp(17px, 3vw, 24px); white-space: nowrap; }
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        #btn-copy { background: var(--btn-copy); white-space: nowrap; }
+        #char-count { margin: 0; padding: 0 4px; font-size: 15px; font-weight: bold; white-space: nowrap; }
         .app-menu { position: relative; z-index: 30; }
         .app-menu summary {
             display: flex;
@@ -117,7 +120,7 @@
         }
         .editor-tools {
             display: grid;
-            grid-template-columns: 44px 44px auto minmax(0, 1fr);
+            grid-template-columns: 44px 44px auto minmax(0, 1fr) auto;
             align-items: center;
             gap: 6px;
             min-height: 44px;
@@ -207,10 +210,11 @@
         #btn-comma, #btn-period, #btn-long-vowel { background: #217268; }
         #btn-newline { background: #4a5a8a; }
         #btn-search { background: var(--btn-search); }
-        #btn-copy { background: var(--btn-copy); }
         #btn-save { background: var(--btn-save); }
         #keyboard {
-            --key-size: min(76px, calc((100vw - 80px) / 5), max(44px, calc((100dvh - 400px) / 3)));
+            /* Portrait keys grow past 76px only while the writing area keeps about 30% of the height. */
+            --key-size: min(120px, calc((100vw - 80px) / 5),
+                max(44px, min(calc((100dvh - 400px) / 3), max(76px, calc((70dvh - 386px) / 3)))));
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -223,7 +227,8 @@
             touch-action: none;
         }
         #keyboard[data-layout="smartphone"] {
-            --key-size: min(76px, calc((100vw - 80px) / 3), max(44px, calc((100dvh - 470px) / 4)));
+            --key-size: min(120px, calc((100vw - 80px) / 3),
+                max(44px, min(calc((100dvh - 470px) / 4), max(76px, calc((70dvh - 394px) / 4)))));
         }
         .keyboard-row { display: flex; justify-content: center; gap: 8px; }
         .key {
@@ -238,13 +243,14 @@
             border-radius: 10px;
             background: var(--key-bg);
             color: var(--text-dark);
-            font-size: clamp(20px, 3vw, 30px);
+            font-size: clamp(20px, calc(var(--key-size) * .4), 44px);
             position: relative;
         }
         .key.active { background: var(--key-active-bg); color: #fff; }
         .key-placeholder { visibility: hidden; }
         .flick-options {
-            --option-size: min(52px, var(--key-size));
+            /* Grows with the key so the guide stays readable around a child's finger. */
+            --option-size: clamp(52px, calc(var(--key-size) * .75), 80px);
             position: absolute;
             width: calc(var(--option-size) * 3);
             height: calc(var(--option-size) * 3);
@@ -264,7 +270,7 @@
             border-radius: 10px;
             background: rgba(0,0,0,.78);
             color: #fff;
-            font-size: 22px;
+            font-size: calc(var(--option-size) * .45);
         }
         .flick-center { top: var(--option-size); left: var(--option-size); }
         .flick-up { top: 0; left: var(--option-size); }
@@ -304,18 +310,18 @@
         #btn-clear-cancel { background: #5c6670; }
         #btn-clear-ok { background: var(--btn-clear); }
         @media (min-width: 760px) and (min-aspect-ratio: 1/1) {
-            .workspace { grid-template-columns: minmax(260px,.8fr) minmax(440px,1.2fr); grid-template-rows: minmax(0,1fr); }
+            .workspace { grid-template-columns: minmax(260px,.75fr) minmax(440px,1.25fr); grid-template-rows: minmax(0,1fr); }
             .keyboard-panel { container-type: inline-size; grid-template-columns: minmax(0,1fr) 128px; grid-template-rows: 44px minmax(0,1fr); }
             .layout-settings { grid-column: 1 / -1; }
-            #keyboard { --key-size: min(76px, calc((100vw - 460px) / 5), calc((100dvh - 216px) / 3)); }
-            #keyboard[data-layout="smartphone"] { --key-size: min(92px, calc((100vw - 460px) / 3), calc((100dvh - 240px) / 4)); }
+            #keyboard { --key-size: min(120px, calc((100vw - 460px) / 5), calc((100dvh - 216px) / 3)); }
+            #keyboard[data-layout="smartphone"] { --key-size: min(120px, calc((100vw - 460px) / 3), calc((100dvh - 240px) / 4)); }
             .typing-actions { grid-template-columns: repeat(2,minmax(0,1fr)); align-content: center; }
             .typing-actions .btn { padding: 8px 2px; font-size: 14px; }
             #btn-long-vowel, #btn-newline { grid-column: 1 / -1; }
             #output-area { font-size: 28px; }
             @supports (width: 1cqw) {
-                #keyboard { --key-size: min(76px, calc((100cqw - 192px) / 5), calc((100dvh - 216px) / 3)); }
-                #keyboard[data-layout="smartphone"] { --key-size: min(92px, calc((100cqw - 176px) / 3), calc((100dvh - 240px) / 4)); }
+                #keyboard { --key-size: min(120px, calc((100cqw - 192px) / 5), calc((100dvh - 216px) / 3)); }
+                #keyboard[data-layout="smartphone"] { --key-size: min(120px, calc((100cqw - 176px) / 3), calc((100dvh - 240px) / 4)); }
             }
         }
         @media (max-width: 400px) {
@@ -338,10 +344,11 @@
     <div class="container">
         <header>
             <h1>📱 フリック入力</h1>
+            <div class="header-actions">
+            <button type="button" class="btn" id="btn-copy">📋 コピー</button>
             <details class="app-menu" id="app-menu">
                 <summary>メニュー</summary>
                 <div class="menu-panel">
-                    <button type="button" class="btn" id="btn-copy">📋 コピー</button>
                     <button type="button" class="btn" id="btn-save">💾 ほぞん</button>
                     <button type="button" class="btn" id="btn-search">🔍 Google検索</button>
                     <button type="button" class="btn" id="btn-clear">クリア</button>
@@ -352,6 +359,7 @@
                     <p>書いた文章は、このタブレットの中に自動でほぞんされます。まちがえたときは「もどす」で1つ前にもどせます。</p>
                 </div>
             </details>
+            </div>
         </header>
         <main class="workspace">
             <section class="editor-panel" aria-label="文章の入力と変換">
@@ -363,6 +371,7 @@
                     <button type="button" class="cursor-btn" id="btn-cursor-right" aria-label="カーソルを1文字右へ">▶</button>
                     <button type="button" id="btn-undo" aria-label="1つ前にもどす" disabled>↶ もどす</button>
                     <p id="composition-status" role="status">入力欄で位置を選べます。</p>
+                    <p id="char-count" aria-label="字数">0字</p>
                 </div>
                 <div class="conversion-bar">
                     <div id="suggestions-area" aria-label="漢字の変換候補"></div>
@@ -432,6 +441,11 @@
                 if (part.index > position) return part.index;
             }
             return text.length;
+        }
+
+        // Counts characters as children count them for writing: line breaks are not counted.
+        function countCharacters(text) {
+            return [...characterSegments(text.replace(/\r?\n/g, ''))].length;
         }
 
         class FlickEditor {
@@ -691,6 +705,7 @@
             const retryButton = document.getElementById('btn-retry');
             const layoutSelect = document.getElementById('layout-select');
             const undoButton = document.getElementById('btn-undo');
+            const charCount = document.getElementById('char-count');
             const clearDialog = document.getElementById('clear-dialog');
             const editor = new FlickEditor();
             const DRAFT_KEY = 'flick-draft-text';
@@ -777,6 +792,7 @@
                     : '入力欄で位置を選べます。';
                 compositionStatus.title = compositionStatus.textContent;
                 undoButton.disabled = !editor.undoStack.length;
+                charCount.textContent = `${countCharacters(editor.text)}字`;
                 saveDraft();
                 rendering = false;
             }
